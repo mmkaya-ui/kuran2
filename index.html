@@ -231,7 +231,7 @@
             class="bg-emerald-700 dark:bg-emerald-900 border-b border-transparent dark:border-emerald-800 text-white px-4 pb-2 shadow-lg transition-colors duration-300">
             <div class="max-w-md mx-auto relative pt-2">
                 <button id="btn-theme-toggle"
-                    class="absolute right-0 top-2.5 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
+                    class="absolute right-0 top-1.5 z-[101] bg-emerald-600 dark:bg-emerald-800 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition shadow-md border border-emerald-500 dark:border-emerald-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-400 focus:ring-offset-emerald-800">
                     <i class="fa-solid fa-moon text-white text-xs pointer-events-none"></i>
                 </button>
 
@@ -745,27 +745,38 @@
 
         const API_BASE = "https://api.alquran.cloud/v1";
         const EDITIONS = {
-            arabic: "quran-uthmani",
+            arabic: "quran-simple",
             audio: "ar.alafasy",
             transliteration: "tr.transliteration",
             tr_diyanet: "tr.vakfi",
             tr_yazir: "tr.yazir",
-            tr_ates: "tr.ates"
+            tr_ates: "tr.ates",
+            tr_ozturk: "tr.ozturk",
+            tr_yildirim: "tr.yildirim",
+            tr_yuksel: "tr.yuksel"
         };
         const SURAH_NAMES_TR = ["Fâtiha", "Bakara", "Âl-i İmrân", "Nisâ", "Mâide", "En'âm", "A'râf", "Enfâl", "Tevbe", "Yûnus", "Hûd", "Yûsuf", "Ra'd", "İbrâhîm", "Hicr", "Nahl", "İsrâ", "Kehf", "Meryem", "Tâhâ", "Enbiyâ", "Hac", "Mü'minûn", "Nûr", "Furkân", "Şu'arâ", "Neml", "Kasas", "Ankebût", "Rûm", "Lokmân", "Secde", "Ahzâb", "Sebe'", "Fâtır", "Yâsîn", "Sâffât", "Sâd", "Zümer", "Mü'min", "Fussilet", "Şûrâ", "Zuhruf", "Duhân", "Câsiye", "Ahkâf", "Muhammed", "Fetih", "Hucurât", "Kâf", "Zâriyât", "Tûr", "Necm", "Kamer", "Rahmân", "Vâkıa", "Hadîd", "Mücâdele", "Haşr", "Mümtehine", "Saff", "Cum'a", "Münâfikûn", "Teğâbün", "Talâk", "Tahrîm", "Mülk", "Kalem", "Hâkka", "Meâric", "Nûh", "Cin", "Müzzemmil", "Müddessir", "Kıyâme", "İnsân", "Mürselât", "Nebe'", "Nâziât", "Abese", "Tekvîr", "İnfitâr", "Mutaffifîn", "İnşikâk", "Burûc", "Târık", "A'lâ", "Gâşiye", "Fecr", "Beled", "Şems", "Leyl", "Duhâ", "İnşirah", "Tîn", "Alak", "Kadir", "Beyyine", "Zilzâl", "Âdiyât", "Kâria", "Tekâsür", "Asr", "Hümeze", "Fîl", "Kureyş", "Mâûn", "Kevser", "Kâfirûn", "Nasr", "Tebbet", "İhlâs", "Felak", "Nâs"];
         const REVELATION_ORDER_MAP = { 1: 5, 2: 87, 3: 89, 4: 92, 5: 112, 6: 55, 7: 39, 8: 88, 9: 113, 10: 51, 11: 52, 12: 53, 13: 96, 14: 72, 15: 54, 16: 70, 17: 50, 18: 69, 19: 44, 20: 45, 21: 73, 22: 103, 23: 74, 24: 102, 25: 42, 26: 47, 27: 48, 28: 49, 29: 85, 30: 84, 31: 57, 32: 75, 33: 90, 34: 58, 35: 43, 36: 41, 37: 56, 38: 38, 39: 59, 40: 60, 41: 61, 42: 62, 43: 63, 44: 64, 45: 65, 46: 66, 47: 95, 48: 111, 49: 106, 50: 34, 51: 67, 52: 76, 53: 23, 54: 37, 55: 97, 56: 46, 57: 94, 58: 105, 59: 101, 60: 91, 61: 109, 62: 110, 63: 104, 64: 108, 65: 99, 66: 107, 67: 77, 68: 2, 69: 78, 70: 79, 71: 71, 72: 40, 73: 3, 74: 4, 75: 31, 76: 98, 77: 33, 78: 80, 79: 81, 80: 24, 81: 7, 82: 82, 83: 86, 84: 83, 85: 27, 86: 36, 87: 8, 88: 68, 89: 10, 90: 35, 91: 26, 92: 9, 93: 11, 94: 12, 95: 28, 96: 1, 97: 25, 98: 100, 99: 93, 100: 14, 101: 30, 102: 16, 103: 13, 104: 32, 105: 19, 106: 29, 107: 17, 108: 15, 109: 18, 110: 114, 111: 6, 112: 22, 113: 20, 114: 21 };
+
+        const AYAH_COUNTS = [7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6];
+        const getGlobalAyahID = (surahNum, ayahNumInSurah) => {
+            if (!surahNum || !ayahNumInSurah) return 1;
+            let count = 0;
+            for (let i = 0; i < surahNum - 1; i++) count += AYAH_COUNTS[i];
+            return count + ayahNumInSurah;
+        };
 
         const getSurahNameTR = (number) => (number < 1 || number > 114) ? "" : SURAH_NAMES_TR[number - 1];
 
         const normalizeText = (text) => {
             if (!text) return "";
             return text.toLocaleLowerCase('tr')
-                .replace(/['’‘]/g, '') // Ignore apostrophes
+                .replace(/['’‘\-\u2010\u2011\u2012\u2013\u2014\u2015]/g, '')
                 .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
                 .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
                 .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
-                // Safe guard for any remaining standard I/i issues if locale fails
-                .replace(/İ/g, 'i').replace(/I/g, 'i');
+                .replace(/İ/g, 'i').replace(/I/g, 'i')
+                .replace(/\s+/g, '');
         };
 
         const sortMatches = (matches, type) => {
@@ -801,6 +812,11 @@
             const [rawMatches, setRawMatches] = useState([]);
             const [loading, setLoading] = useState(false);
             const [loadingText, setLoadingText] = useState("");
+            const [wordMode, setWordMode] = useState(false);
+            const [segments, setSegments] = useState([]);
+            const [currentWordIndex, setCurrentWordIndex] = useState(-1);
+            const [playbackRate, setPlaybackRate] = useState(1);
+            const [repeatMode, setRepeatMode] = useState('none');
             const autoPlayAfterLoad = useRef(false);
             // YENİ: Bekleyen atlama isteği (Bookmark için)
             const [pendingJump, setPendingJump] = useState(null);
@@ -816,6 +832,12 @@
 
                 const currentIndex = list.findIndex(a => a.number === activeAyah.number);
                 if (currentIndex === -1) return;
+
+                // Media Session Action Handlers need latest state (re-bind on each change)
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.setActionHandler('previoustrack', playPrev);
+                    navigator.mediaSession.setActionHandler('nexttrack', playNext);
+                }
 
                 // Sıradaki 5 ayeti belirle
                 const nextAyahs = list.slice(currentIndex + 1, currentIndex + 6);
@@ -836,6 +858,48 @@
 
                 return () => clearTimeout(timer);
             }, [activeAyah, viewMode, ayahs, detailedResults, activePlaylist]);
+
+            useEffect(() => {
+                if (autoPlayAfterLoad.current && ayahs.length > 0) {
+                    playAyah(ayahs[0]);
+                    autoPlayAfterLoad.current = false;
+                }
+
+                // YENİ: Bekleyen atlama isteği varsa işle
+                if (pendingJump && ayahs.length > 0) {
+                    // 1. Doğru sure seçili mi?
+                    // 2. Yüklenen ayetler GERÇEKTEN o sureye mi ait? (Eski veriyi kullanma)
+                    const isSurahMatch = activeSurah && activeSurah.number === pendingJump.surahNumber;
+                    const isDataLoaded = ayahs[0] && ayahs[0].surahNumber === pendingJump.surahNumber;
+
+                    if (isSurahMatch && isDataLoaded) {
+                        const targetAyah = ayahs.find(a => a.numberInSurah === pendingJump.ayahNumber);
+
+                        if (targetAyah) {
+                            // 1. Görünürlük limitini artır
+                            const idx = ayahs.indexOf(targetAyah);
+                            if (idx >= displayLimit) {
+                                setDisplayLimit(idx + 10);
+                            }
+
+                            // 2. Playback ve Odaklanma (Hafif gecikmeli render garantisi için)
+                            setTimeout(() => {
+                                // ÖNCE UI'ı güncelle (Scroll timer'ı bu başlatacak)
+                                setActiveAyah(targetAyah);
+
+                                if (pendingJump.shouldPlay) {
+                                    // Sesi çal ama UI'a dokunma (Zaten yukarıda güncelledik)
+                                    // Bu sayede çift render ve timer iptali (scroll iptali) olmaz.
+                                    playAyah(targetAyah, { onlyAudio: true, forcePlay: true });
+                                }
+                            }, 200);
+
+                            // İsteği temizle
+                            setPendingJump(null);
+                        }
+                    }
+                }
+            }, [ayahs, pendingJump]);
 
             useEffect(() => {
                 if (autoPlayAfterLoad.current && ayahs.length > 0) {
@@ -903,12 +967,17 @@
                 const audio = audioRef.current;
                 audio.preload = "auto";
                 audio.setAttribute('playsinline', 'true');
+                audio.playbackRate = playbackRate; // Apply initial or updated rate
 
                 const onPlay = () => setIsPlaying(true);
                 const onPause = () => setIsPlaying(false);
                 const onEnded = () => {
                     setIsPlaying(false);
-                    playNext();
+                    if (repeatMode === 'one' && activeAyah) {
+                        playAyah(activeAyah, { forcePlay: true });
+                    } else {
+                        playNext();
+                    }
                 };
 
                 audio.addEventListener('play', onPlay);
@@ -936,7 +1005,14 @@
                     audio.removeEventListener('pause', onPause);
                     audio.removeEventListener('ended', onEnded);
                 };
-            }, [ayahs, detailedResults, activeAyah, activePlaylist, viewMode, activeSurah, sortType, surahs]); // Deps needed for playNext closure
+            }, [ayahs, detailedResults, activeAyah, activePlaylist, viewMode, activeSurah, sortType, surahs, repeatMode, playbackRate]); // Added repeatMode and playbackRate
+            
+            // Handle playbackRate changes instantly
+            useEffect(() => {
+                if (audioRef.current) {
+                    audioRef.current.playbackRate = playbackRate;
+                }
+            }, [playbackRate]);
 
             // Update Media Metadata
             useEffect(() => {
@@ -1092,6 +1168,7 @@
                 }
 
                 audio.src = ayah.audio || "";
+                audio.playbackRate = playbackRate;
                 if (ayah.audio) {
                     audio.load();
                     const playPromise = audio.play();
@@ -1127,7 +1204,11 @@
 
                 if (idx !== -1 && idx < list.length - 1) {
                     playAyah(list[idx + 1]);
+                } else if (idx === list.length - 1 && repeatMode === 'all') {
+                    // Listenin veya Surenin sonuna gelindiğinde ve "Tümünü Tekrarla" açıksa başa dön
+                    playAyah(list[0]);
                 } else if (viewMode === 'reader' && activeSurah && idx === list.length - 1) {
+                    // Tekrar kapalıysa ve sure bittiyse sonraki sureye geç
                     let nextSurah = null;
                     if (sortType === 'mushaf') {
                         nextSurah = surahs.find(s => s.number === activeSurah.number + 1);
@@ -1156,7 +1237,7 @@
                 setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setActiveSurah(surah);
 
                 try {
-                    const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.audio}`;
+                    const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.tr_ozturk},${EDITIONS.tr_yildirim},${EDITIONS.tr_yuksel},${EDITIONS.audio}`;
                     const [editionsRes, metaRes] = await Promise.all([
                         fetch(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`),
                         fetch(`${API_BASE}/surah/${surah.number}`)
@@ -1167,17 +1248,18 @@
 
                     if (metaData.code === 200) setActiveSurah(prev => ({ ...prev, ...metaData.data }));
 
-                    const combinedAyahs = editionsData.data[0].ayahs.map((ayah, index) => ({
-                        number: ayah.number,
-                        numberInSurah: ayah.numberInSurah,
+                    const combinedAyahs = metaData.data.ayahs.map((ayah, index) => ({
+                        ...ayah,
                         surahName: getSurahNameTR(surah.number),
                         surahNumber: surah.number,
-                        text: ayah.text,
-                        transliteration: editionsData.data[1].ayahs[index].text,
-                        diyanet: editionsData.data[2].ayahs[index].text,
-                        yazir: editionsData.data[3].ayahs[index].text,
-                        ates: editionsData.data[4].ayahs[index].text,
-                        audio: editionsData.data[5].ayahs[index].audio
+                        transliteration: editionsData.data[1]?.ayahs[index]?.text || "",
+                        diyanet: editionsData.data[2]?.ayahs[index]?.text || "",
+                        yazir: editionsData.data[3]?.ayahs[index]?.text || "",
+                        ates: editionsData.data[4]?.ayahs[index]?.text || "",
+                        ozturk: editionsData.data[5]?.ayahs[index]?.text || "",
+                        yildirim: editionsData.data[6]?.ayahs[index]?.text || "",
+                        yuksel: editionsData.data[7]?.ayahs[index]?.text || "",
+                        audio: editionsData.data[8]?.ayahs[index]?.audio || ""
                     }));
                     setAyahs(combinedAyahs);
                 } catch (e) { console.error(e); } finally { setLoading(false); }
@@ -1317,12 +1399,13 @@
             const value = {
                 surahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah,
                 searchQuery, setSearchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults,
-                activeAyah, isPlaying, playAyah, playNext, playPrev, closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); },
-                audioRef, // Expose ref for PlayerBar local handling
+                activeAyah, setActiveAyah, isPlaying, setIsPlaying, audioRef, playAyah, playNext, playPrev, closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); },
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, fetchDetailsForMatches, loading, loadingText, searching,
-                displayLimit, setDisplayLimit, pendingJump, setPendingJump, navigate
+                displayLimit, setDisplayLimit, pendingJump, setPendingJump, navigate,
+                wordMode, setWordMode, segments, setSegments, currentWordIndex, setCurrentWordIndex,
+                playbackRate, setPlaybackRate, repeatMode, setRepeatMode
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1348,8 +1431,99 @@
             const {
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
-                playlists, setPlaylists, viewMode, activePlaylist
+                playlists, setPlaylists, viewMode, activePlaylist, wordMode, currentWordIndex
             } = useQuran();
+
+            const [showTafsir, setShowTafsir] = useState(false);
+            const [showNotes, setShowNotes] = useState(false);
+            const [localNote, setLocalNote] = useState("");
+            const [footnotes, setFootnotes] = useState([]);
+            const [loadingFootnotes, setLoadingFootnotes] = useState(false);
+            const [diyanetTafsir, setDiyanetTafsir] = useState(null);
+            const [loadingDiyanet, setLoadingDiyanet] = useState(false);
+
+            // Load local note
+            useEffect(() => {
+                const noteKey = `quran_note_${ayahData.surahNumber}_${ayahData.numberInSurah}`;
+                const saved = localStorage.getItem(noteKey);
+                if (saved) setLocalNote(saved);
+            }, [ayahData.surahNumber, ayahData.numberInSurah]);
+
+            const saveNote = (val) => {
+                setLocalNote(val);
+                const noteKey = `quran_note_${ayahData.surahNumber}_${ayahData.numberInSurah}`;
+                if (val.trim()) localStorage.setItem(noteKey, val);
+                else localStorage.removeItem(noteKey);
+            };
+
+            useEffect(() => {
+                if (showTafsir && footnotes.length === 0) {
+                    setLoadingFootnotes(true);
+                    fetch(`https://api.acikkuran.com/surah/${ayahData.surahNumber}/verse/${ayahData.numberInSurah}?author=105`)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.data && data.data.translation && data.data.translation.footnotes) {
+                                setFootnotes(data.data.translation.footnotes);
+                            }
+                        }).catch(err => console.error("Footnote error:", err))
+                        .finally(() => setLoadingFootnotes(false));
+                }
+            }, [showTafsir, ayahData.surahNumber, ayahData.numberInSurah]);
+
+            const globalID = getGlobalAyahID(ayahData.surahNumber, ayahData.numberInSurah);
+            const normalizedSurahName = ayahData.surahName.replace(/\s+/g, '-');
+            const diyanetUrl = `https://kuran.diyanet.gov.tr/tefsir/${normalizedSurahName}-suresi/${globalID}/${ayahData.numberInSurah}-ayet-tefsiri`;
+
+            const fetchDiyanetTafsir = async () => {
+                if (diyanetTafsir || loadingDiyanet) return;
+                setLoadingDiyanet(true);
+                try {
+                    // CORS Proxy kullanarak Diyanet sitesinden tefsiri çekiyoruz (allorigins hata verdiği için codetabs kullanıyoruz)
+                    const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(diyanetUrl)}`;
+                    const response = await fetch(proxyUrl);
+                    const htmlText = await response.text();
+                    
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlText, 'text/html');
+                    const tefsirDiv = doc.querySelector('.tefsir-text');
+                    
+                    if (tefsirDiv) {
+                        // Gereksiz boşlukları ve scriptleri temizle
+                        const cleanText = tefsirDiv.innerHTML
+                            .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+                            .replace(/style="[^"]*"/g, "")
+                            .replace(/class="[^"]*"/g, "");
+                        setDiyanetTafsir(cleanText);
+                    } else {
+                        setDiyanetTafsir("<p class='text-sm text-red-500'>Tefsir metni bu sayfadan çekilemedi. Lütfen Diyanet'in sitesinden kontrol edin.</p>");
+                    }
+                } catch (err) {
+                    console.error("Diyanet fetch error:", err);
+                    setDiyanetTafsir("<p class='text-sm text-red-500'>Tefsir yüklenirken bir hata oluştu (CORS/Proxy).</p>");
+                } finally {
+                    setLoadingDiyanet(false);
+                }
+            };
+
+            const renderTextWithMarkers = (text) => {
+                if (!text) return "";
+                const parts = text.split(/(\[\d+\]|\(\d+\))/g);
+                return parts.map((part, i) => {
+                    if (part.match(/(\[\d+\]|\(\d+\))/)) {
+                        return (
+                            <span 
+                                key={i} 
+                                className="inline-flex items-center justify-center w-5 h-5 ml-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer hover:bg-emerald-200 transition-colors"
+                                onClick={(e) => { e.stopPropagation(); setShowTafsir(true); }}
+                                title="Açıklamayı gör"
+                            >
+                                {part.replace(/[\[\]()]/g, '')}
+                            </span>
+                        );
+                    }
+                    return part;
+                });
+            };
 
             const isActive = activeAyah?.number === ayahData.number;
             const isSelected = selectedAyahs.some(s => s.number === ayahData.number);
@@ -1381,6 +1555,41 @@
                 setPlaylists(prev => prev.map(p => p.id === activePlaylist.id ? updated : p));
             };
 
+            // Word mode handling
+            const BISMILLAH_PREFIX = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ";
+            let displayArabic = ayahData.text;
+            let bismillahShown = false;
+            if (ayahData.numberInSurah === 1 && ayahData.surahNumber !== 1 && ayahData.surahNumber !== 9 && displayArabic.startsWith(BISMILLAH_PREFIX)) {
+                displayArabic = displayArabic.substring(BISMILLAH_PREFIX.length);
+                bismillahShown = true;
+            }
+
+            const ArabicText = () => {
+                if (!wordMode || !isActive) {
+                    return (
+                        <div className="space-y-2">
+                            {bismillahShown && (
+                                <div className="text-center mb-6 font-arabic text-emerald-600 dark:text-emerald-400 opacity-80" style={{ fontSize: `${fontSize * 1.8}px` }}>{BISMILLAH_PREFIX}</div>
+                            )}
+                            <p className="font-arabic text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{displayArabic}</p>
+                        </div>
+                    );
+                }
+                const words = displayArabic.split(' ');
+                return (
+                    <div className="space-y-2">
+                        {bismillahShown && (
+                            <div className="text-center mb-6 font-arabic text-emerald-600 dark:text-emerald-400 opacity-80" style={{ fontSize: `${fontSize * 1.8}px` }}>{BISMILLAH_PREFIX}</div>
+                        )}
+                        <div className="flex flex-wrap justify-end gap-x-3 gap-y-2 leading-[2.2]" dir="rtl">
+                            {words.map((word, i) => (
+                                <span key={i} className={`font-arabic transition-all duration-150 inline-block px-1 rounded ${currentWordIndex === i ? 'text-emerald-600 dark:text-emerald-400 scale-110 font-bold bg-emerald-50 dark:bg-emerald-900/20' : 'text-slate-800 dark:text-gray-100'}`} style={{ fontSize: `${fontSize + 12}px`, fontFamily: "'Amiri', serif" }}>{word}</span>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
             return (
                 <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-black border-slate-200 dark:border-neutral-800'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
                     <div className="bg-slate-50 dark:bg-black dark:border-b dark:border-neutral-800 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
@@ -1391,6 +1600,7 @@
                             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">{ayahData.surahName} - {ayahData.numberInSurah}</span>
                         </div>
                         <div className="flex gap-2 relative">
+                            <button onClick={() => setShowNotes(!showNotes)} className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${localNote ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-600'}`} title="Not Al"><i className={`fa-solid ${localNote ? 'fa-note-sticky' : 'fa-pen-to-square'} text-xs`}></i></button>
                             {viewMode === 'playlist_view' ? (
                                 <button onClick={removeFromPlaylist} className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"><i className="fa-solid fa-trash text-xs"></i></button>
                             ) : (
@@ -1422,7 +1632,7 @@
                     </div>
                     <div className="p-6">
                         <div className="text-right mb-6 leading-loose" dir="rtl">
-                            <p className="font-arabic text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{ayahData.text}</p>
+                            <ArabicText />
                         </div>
                         <div className="mb-6 p-3 bg-slate-50 dark:bg-gray-900/50 rounded-lg border-l-4 border-slate-300 dark:border-gray-600">
                             <h4 className="text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-bold">Türkçe Okunuş</h4>
@@ -1431,7 +1641,7 @@
                         <div className="grid grid-cols-1 gap-4">
                             <div className="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/30">
                                 <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-500 mb-2 flex items-center gap-1">Diyanet Vakfı</h4>
-                                <p className="text-slate-800 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize}px` }}>{ayahData.diyanet}</p>
+                                <p className="text-slate-800 dark:text-slate-200 leading-relaxed" style={{ fontSize: `${fontSize}px` }}>{renderTextWithMarkers(ayahData.diyanet)}</p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
@@ -1444,13 +1654,75 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div className="mt-5 flex justify-center border-t border-slate-100 dark:border-neutral-800 pt-5">
+                            <button onClick={() => setShowTafsir(!showTafsir)} className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium transition-colors border ${showTafsir ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-800/50 dark:text-emerald-400' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-emerald-600 dark:bg-transparent dark:border-neutral-700 dark:text-slate-400 dark:hover:bg-neutral-800'}`}>
+                                <i className={`fa-solid ${showTafsir ? 'fa-chevron-up' : 'fa-book-open'}`}></i>
+                                {showTafsir ? 'Tefsir ve Mealleri Gizle' : 'Tefsir ve Diğer Mealleri Gör'}
+                            </button>
+                        </div>
+
+                        {showNotes && (
+                            <div className="mt-6 p-4 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
+                                <h4 className="text-xs font-bold text-amber-700 dark:text-amber-500 mb-2 flex items-center gap-2"><i className="fa-solid fa-pen-nib"></i> Notunuz</h4>
+                                <textarea value={localNote} onChange={(e) => saveNote(e.target.value)} placeholder="Notlarınızı buraya yazabilirsiniz..." className="w-full h-24 p-3 text-sm bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900/30 rounded focus:ring-2 focus:ring-amber-500 outline-none resize-none dark:text-slate-200" />
+                            </div>
+                        )}
+
+                        {showTafsir && (
+                            <div className="mt-6 space-y-4 pt-4 border-t dark:border-gray-700">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
+                                        <h4 className="text-xs font-bold text-emerald-600 mb-2">Yaşar Nuri Öztürk</h4>
+                                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.ozturk}</p>
+                                    </div>
+                                    <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
+                                        <h4 className="text-xs font-bold text-emerald-600 mb-2">Suat Yıldırım</h4>
+                                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yildirim}</p>
+                                    </div>
+                                    <div className="p-4 rounded-lg bg-slate-50 dark:bg-gray-700/30 border border-slate-100 dark:border-gray-700">
+                                        <h4 className="text-xs font-bold text-emerald-600 mb-2">Edip Yüksel</h4>
+                                        <p className="text-slate-600 dark:text-slate-400 leading-relaxed" style={{ fontSize: `${fontSize - 1}px` }}>{ayahData.yuksel}</p>
+                                    </div>
+                                </div>
+                                {loadingFootnotes ? <div className="text-center p-2"><i className="fa-solid fa-spinner fa-spin text-emerald-500"></i></div> : footnotes.length > 0 && (
+                                    <div className="space-y-2">
+                                        <h4 className="text-xs font-bold text-emerald-600 flex items-center gap-2"><i className="fa-solid fa-circle-info"></i> Açıklamalar</h4>
+                                        {footnotes.map((fn, idx) => (
+                                            <div key={idx} className="p-3 rounded bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100/50 text-sm">{fn.text}</div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="mt-4 pt-4 border-t dark:border-gray-700">
+                                    <h4 className="text-xs font-bold text-emerald-600 mb-3 flex items-center justify-between">
+                                        <span>Diyanet İşleri (Kur'an Yolu) Tefsiri</span>
+                                        <a href={diyanetUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-600/70 hover:text-emerald-600 dark:text-emerald-500/70 dark:hover:text-emerald-400 transition-colors flex items-center gap-1" title="Diyanet sitesinde aç">
+                                            Orijinal Kaynak <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                                        </a>
+                                    </h4>
+                                    
+                                    {loadingDiyanet ? (
+                                        <div className="flex items-center justify-center gap-2 text-xs text-emerald-600 py-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
+                                            <i className="fa-solid fa-spinner fa-spin"></i> Tefsir metni çekiliyor...
+                                        </div>
+                                    ) : diyanetTafsir ? (
+                                        <div className="prose prose-sm dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 bg-white dark:bg-gray-800/40 p-4 rounded-lg border dark:border-gray-700 max-h-96 overflow-y-auto custom-scrollbar" dangerouslySetInnerHTML={{ __html: diyanetTafsir }} />
+                                    ) : (
+                                        <button onClick={fetchDiyanetTafsir} className="w-full flex items-center justify-center gap-2 p-3 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors text-xs font-bold shadow-sm active:scale-[0.99]">
+                                            <i className="fa-solid fa-cloud-arrow-down"></i> Tefsir Metnini Buraya Getir
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
         });
 
         const PlayerBar = () => {
-            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef } = useQuran();
+            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, wordMode, setWordMode, repeatMode, setRepeatMode } = useQuran();
 
             // Local state for high-frequency updates
             const [currentTime, setCurrentTime] = useState(0);
@@ -1506,6 +1778,15 @@
                             <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">{activeAyah.surahName} {activeAyah.numberInSurah}. Ayet</h3>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shrink-0 h-8 border border-gray-200 dark:border-gray-700 shadow-inner">
+                                <button onClick={() => setPlaybackRate(prev => Math.max(0.5, prev - 0.25))} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat">-</button>
+                                <span className="w-8 text-center text-[10px] font-bold text-emerald-600 select-none">{playbackRate}x</span>
+                                <button onClick={() => setPlaybackRate(prev => Math.min(2.0, prev + 0.25))} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır">+</button>
+                            </div>
+                            <button onClick={() => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none')} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${repeatMode !== 'none' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={repeatMode === 'none' ? "Tekrar Kapalı" : repeatMode === 'one' ? "Tek Ayeti Tekrarla" : "Tüm Listeyi Tekrarla"}>
+                                <i className="fa-solid fa-repeat text-xs"></i>
+                                {repeatMode === 'one' && <span className="absolute text-[8px] font-bold bottom-1 right-1.5 bg-white dark:bg-black rounded-full w-3 h-3 flex items-center justify-center leading-none">1</span>}
+                            </button>
                             <button onClick={playPrev} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-backward-step text-xs"></i></button>
                             <button onClick={() => playAyah(activeAyah)} className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg active:scale-95">
                                 {isPlaying ? <i className="fa-solid fa-pause"></i> : <i className="fa-solid fa-play ml-1"></i>}
@@ -1576,10 +1857,14 @@
 
             // Helper: Normalize Text
             function normalizeText(text) {
-                return text.toLowerCase()
-                    .replace(/ğ/g, "g").replace(/ü/g, "u").replace(/ş/g, "s")
-                    .replace(/ı/g, "i").replace(/ö/g, "o").replace(/ç/g, "c")
-                    .replace(/â/g, "a").replace(/î/g, "i").replace(/û/g, "u");
+                if (!text) return "";
+                return text.toLocaleLowerCase('tr')
+                    .replace(/['’‘\-\u2010\u2011\u2012\u2013\u2014\u2015]/g, '')
+                    .replace(/â/g, 'a').replace(/î/g, 'i').replace(/û/g, 'u')
+                    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+                    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+                    .replace(/İ/g, 'i').replace(/I/g, 'i')
+                    .replace(/\s+/g, '');
             }
 
             self.onmessage = async (e) => {
@@ -2112,12 +2397,19 @@
 
             const [playlistModal, setPlaylistModal] = useState(false);
             const [newListName, setNewListName] = useState("");
+            const [toastMessage, setToastMessage] = useState("");
+
+            const showToast = (message) => {
+                setToastMessage(message);
+                setTimeout(() => setToastMessage(""), 3000);
+            };
 
             const handleBulkAdd = () => {
                 if (!newListName) return;
                 const newP = { id: Date.now(), name: newListName, items: [...selectedAyahs] };
                 setPlaylists([...playlists, newP]);
                 setNewListName("");
+                showToast(`${selectedAyahs.length} ayet '${newListName}' listesine eklendi.`);
                 setSelectedAyahs([]);
                 setPlaylistModal(false);
             };
@@ -2126,7 +2418,7 @@
                 <div className="flex flex-col h-full font-sans relative">
                     <header className="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg z-20 sticky top-0 border-b border-transparent dark:border-emerald-800">
                         <div className="max-w-md mx-auto relative pt-2">
-                            <button onClick={() => setDarkMode(!darkMode)} className="absolute right-0 top-2.5 bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500">
+                            <button onClick={() => setDarkMode(!darkMode)} className="absolute right-0 top-1.5 bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500">
                                 {darkMode ? <i className="fa-solid fa-sun text-xs"></i> : <i className="fa-solid fa-moon text-xs"></i>}
                             </button>
                             <div className="mb-2 flex items-center gap-3 pr-10">
@@ -2187,6 +2479,7 @@
                                             <button key={p.id} onClick={() => {
                                                 const updated = { ...p, items: [...p.items, ...selectedAyahs.filter(s => !p.items.some(pi => pi.number === s.number))] };
                                                 setPlaylists(prev => prev.map(pr => pr.id === p.id ? updated : pr));
+                                                showToast(`${selectedAyahs.length} ayet '${p.name}' listesine eklendi.`);
                                                 setSelectedAyahs([]);
                                                 setPlaylistModal(false);
                                             }} className="text-left text-sm p-2 bg-gray-50 dark:bg-gray-700 rounded hover:bg-emerald-50 dark:hover:bg-emerald-900/20">{p.name}</button>
@@ -2194,6 +2487,14 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Toast Notification */}
+                    {toastMessage && (
+                        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[150] bg-gray-900/90 dark:bg-emerald-900/90 text-white px-4 py-2 rounded-full shadow-lg text-sm flex items-center gap-2 animate-bounce-in border border-gray-700 dark:border-emerald-700 backdrop-blur-sm">
+                            <i className="fa-solid fa-circle-check text-emerald-400"></i>
+                            {toastMessage}
                         </div>
                     )}
                 </div>
