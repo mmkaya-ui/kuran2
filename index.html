@@ -367,10 +367,16 @@
                     window.toggleQuranView(true);
                 });
 
-                // Check initial hash on load
-                window.addEventListener('load', () => {
+                // Initial routing check
+                if (window.location.hash === '#quran') {
+                    setTimeout(() => window.toggleQuranView(true, true), 100);
+                }
+
+                window.addEventListener('hashchange', () => {
                     if (window.location.hash === '#quran') {
                         window.toggleQuranView(true, true);
+                    } else {
+                        window.toggleQuranView(false, true);
                     }
                 });
 
@@ -827,8 +833,13 @@
             const [playbackRate, setPlaybackRate] = useState(1);
             const [repeatMode, setRepeatMode] = useState('none');
             const autoPlayAfterLoad = useRef(false);
-            // YENİ: Bekleyen atlama isteği (Bookmark için)
             const [pendingJump, setPendingJump] = useState(null);
+            const [toastMessage, setToastMessage] = useState("");
+
+            const showToast = (message) => {
+                setToastMessage(message);
+                setTimeout(() => setToastMessage(""), 3000);
+            };
 
             // YENİ: Dinamik Önbellekleme (Aggressive Prefetching)
             // Çalan ayet değiştiğinde, sıradaki 5 ayetin ses dosyasını hemen indirir.
@@ -1432,7 +1443,8 @@
                 bookmark, fetchDetailsForMatches, loading, loadingText, searching,
                 displayLimit, setDisplayLimit, pendingJump, setPendingJump, navigate,
                 wordMode, setWordMode, segments, setSegments, currentWordIndex, setCurrentWordIndex,
-                playbackRate, setPlaybackRate, repeatMode, setRepeatMode
+                playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
+                toastMessage, showToast
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1458,7 +1470,7 @@
             const {
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
-                playlists, setPlaylists, viewMode, activePlaylist, wordMode, currentWordIndex
+                playlists, setPlaylists, viewMode, activePlaylist, wordMode, currentWordIndex, showToast
             } = useQuran();
 
             const [showTafsir, setShowTafsir] = useState(false);
@@ -1469,12 +1481,32 @@
             const [diyanetTafsir, setDiyanetTafsir] = useState(null);
             const [loadingDiyanet, setLoadingDiyanet] = useState(false);
 
-            // Load local note
             useEffect(() => {
                 const noteKey = `quran_note_${ayahData.surahNumber}_${ayahData.numberInSurah}`;
                 const saved = localStorage.getItem(noteKey);
                 if (saved) setLocalNote(saved);
             }, [ayahData.surahNumber, ayahData.numberInSurah]);
+
+            const handleShare = async () => {
+                const shareText = `"${ayahData.diyanet}"\n\n— ${ayahData.surahName} Suresi, ${ayahData.numberInSurah}. Ayet\n\nOkumak için: ${window.location.origin}${window.location.pathname}#quran`;
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: `${ayahData.surahName} ${ayahData.numberInSurah}. Ayet`,
+                            text: shareText,
+                        });
+                    } catch (err) {
+                        console.log('Paylaşım iptal:', err);
+                    }
+                } else {
+                    try {
+                        await navigator.clipboard.writeText(shareText);
+                        showToast("Ayet metni kopyalandı!");
+                    } catch (err) {
+                        showToast("Kopyalama başarısız oldu.");
+                    }
+                }
+            };
 
             const saveNote = (val) => {
                 setLocalNote(val);
@@ -1627,6 +1659,7 @@
                             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">{ayahData.surahName} - {ayahData.numberInSurah}</span>
                         </div>
                         <div className="flex gap-2 relative">
+                            <button onClick={handleShare} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600" title="Paylaş"><i className="fa-solid fa-share-nodes text-xs"></i></button>
                             <button onClick={() => setShowNotes(!showNotes)} className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${localNote ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-600'}`} title="Not Al"><i className={`fa-solid ${localNote ? 'fa-note-sticky' : 'fa-pen-to-square'} text-xs`}></i></button>
                             {viewMode === 'playlist_view' ? (
                                 <button onClick={removeFromPlaylist} className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"><i className="fa-solid fa-trash text-xs"></i></button>
@@ -1952,25 +1985,29 @@
             }
 
             async function handleSearch(queryRaw, sortType) {
-                if (!fullIndex) {
-                   // Try loading one last time
-                   fullIndex = await db.getIndex();
-                   if (!fullIndex) throw new Error("Index not ready");
-                }
-
                 const rawInput = queryRaw.trim();
                 if (!rawInput) return { matches: [] };
 
-                // --- NAVIGATION LOGIC (Replicated in Worker) ---
-                const verseMatch = rawInput.match(/^(\\D+?)\\s+(\\d+)$/);
-                const surahMatch = rawInput.match(/^(\\D+)$/);
+                // --- NAVIGATION LOGIC (Robust) ---
+                // Try formats: "Bakara 20", "Bakara:20", "Bakara-20", "2 20", "2:20"
+                const navRegex = /^(.+?)[\s\:\-]+(\d+)$/;
+                const surahOnlyRegex = /^(.+)$/;
+
+                const matchNav = rawInput.match(navRegex);
+                const matchSurah = rawInput.match(surahOnlyRegex);
 
                 let targetSurahID = null;
                 let targetVerseNum = null;
-                
-                // Helper to find surah ID (with best-match scoring)
+
                 const findSurahID = (q) => {
                     const normQ = normalizeText(q);
+                    if (!normQ) return null;
+
+                    if (/^\d+$/.test(normQ)) {
+                        const n = parseInt(normQ);
+                        if (n >= 1 && n <= 114) return n;
+                    }
+
                     let bestID = null, bestScore = 0;
                     surahNames.forEach((name, idx) => {
                         const norm = normalizeText(name);
@@ -1978,27 +2015,37 @@
                         if (norm === normQ) score = 3;
                         else if (norm.startsWith(normQ)) score = 2;
                         else if (norm.includes(normQ)) score = 1;
-                        if (score > bestScore) { bestScore = score; bestID = idx + 1; }
+                        
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestID = idx + 1;
+                        }
                     });
                     return bestID;
                 };
 
-                if (verseMatch) {
-                    targetSurahID = findSurahID(verseMatch[1]);
-                    targetVerseNum = parseInt(verseMatch[2]);
-                } else if (surahMatch) {
-                    targetSurahID = findSurahID(surahMatch[1]);
-                    if (targetSurahID) targetVerseNum = 1;
+                if (matchNav) {
+                    targetSurahID = findSurahID(matchNav[1]);
+                    targetVerseNum = parseInt(matchNav[2]);
+                } else if (matchSurah) {
+                    const possibleID = findSurahID(matchSurah[1]);
+                    if (possibleID) {
+                        targetSurahID = possibleID;
+                        targetVerseNum = 1;
+                    }
                 }
 
                 if (targetSurahID) {
-                    return { 
-                        nav: { surah: targetSurahID, verse: targetVerseNum } 
-                    };
+                    return { nav: { surah: targetSurahID, verse: targetVerseNum } };
+                }
+
+                // --- TEXT SEARCH ---
+                if (!fullIndex) {
+                   fullIndex = await db.getIndex();
+                   if (!fullIndex) throw new Error("Index not ready");
                 }
 
                 // --- HYPHEN-BASED SURAH FILTERING ---
-                // e.g. "bakara-namaz" → search "namaz" only in Surah Bakara
                 let term = rawInput;
                 let filterSurahID = null;
                 const hyphenRegex = /[\-\u2010\u2011\u2012\u2013\u2014\u2015]/;
@@ -2007,7 +2054,6 @@
                 if (hyphenIndex !== -1) {
                     const potentialSurahName = rawInput.slice(0, hyphenIndex).trim();
                     const rightSide = rawInput.slice(hyphenIndex + 1).trim();
-
                     if (potentialSurahName && rightSide) {
                         const foundID = findSurahID(potentialSurahName);
                         if (foundID) {
@@ -2019,7 +2065,6 @@
 
                 // --- TEXT SEARCH ---
                 let searchMatches = [];
-                // Check if Exact (quoted)
                 const quoteMatch = term.match(/"([^"]+)"/);
                 const isExact = !!quoteMatch;
                 const finalTerm = isExact ? quoteMatch[1] : normalizeText(term);
@@ -2409,7 +2454,7 @@
         };
 
         const AppContainer = () => {
-            const { darkMode, setDarkMode, searchQuery, setSearchQuery, handleSearch, setViewMode, fontSize, setFontSize, selectedAyahs, setSelectedAyahs, playlists, setPlaylists } = useQuran();
+            const { darkMode, setDarkMode, searchQuery, setSearchQuery, handleSearch, setViewMode, fontSize, setFontSize, selectedAyahs, setSelectedAyahs, playlists, setPlaylists, toastMessage, showToast } = useQuran();
 
             // Sync Dark Mode with HTML
             useEffect(() => {
@@ -2424,12 +2469,6 @@
 
             const [playlistModal, setPlaylistModal] = useState(false);
             const [newListName, setNewListName] = useState("");
-            const [toastMessage, setToastMessage] = useState("");
-
-            const showToast = (message) => {
-                setToastMessage(message);
-                setTimeout(() => setToastMessage(""), 3000);
-            };
 
             const handleBulkAdd = () => {
                 if (!newListName) return;
