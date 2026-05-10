@@ -365,6 +365,13 @@
                     window.toggleQuranView(true);
                 });
 
+                // Check initial hash on load
+                window.addEventListener('load', () => {
+                    if (window.location.hash === '#quran') {
+                        window.toggleQuranView(true, true);
+                    }
+                });
+
                 const CONFIG = Object.freeze({
                     CACHE_KEY: 'ders_programi_v8_xlsx',
                     CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQR-t6FwWuwU-JOYcDVEbLdkXT7R8cuvcuz9IPuOY78MPWM44MesHJKBHyI8ZVOehuh5yvv99yI2jLd/pub?output=xlsx',
@@ -1060,7 +1067,25 @@
                     .then(res => res.json())
                     .then(data => {
                         setSurahs(data.data);
-                        // Always select first surah (Fatiha) on load
+                        
+                        // RESTORE STATE: Bookmark veya Fatiha
+                        const savedBookmarkRaw = localStorage.getItem('quran_bookmark');
+                        if (savedBookmarkRaw) {
+                            const b = JSON.parse(savedBookmarkRaw);
+                            const targetSurah = data.data.find(s => s.number === b.surahNumber);
+                            if (targetSurah) {
+                                // Bookmark'taki ayete atla
+                                setPendingJump({
+                                    surahNumber: b.surahNumber,
+                                    ayahNumber: b.numberInSurah,
+                                    shouldPlay: false
+                                });
+                                fetchSurah(targetSurah);
+                                return;
+                            }
+                        }
+
+                        // Bookmark yoksa Fatiha'dan başla
                         if (data.data && data.data.length > 0) {
                             fetchSurah(data.data[0]);
                         } else {
