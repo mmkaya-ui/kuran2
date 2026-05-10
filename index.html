@@ -328,17 +328,19 @@
                     if (show) {
                         scheduleApp.classList.add('hidden');
                         quranApp.classList.remove('hidden');
-                        // Ensure the React app theme matches
                         const isDark = document.documentElement.classList.contains('dark');
                         if (window.syncReactTheme) window.syncReactTheme(isDark);
 
-                        // Push state if not coming from history (back button)
-                        if (!fromHistory) {
+                        if (!fromHistory && window.location.hash !== '#quran') {
                             history.pushState({ quran: true, view: 'home' }, '', '#quran');
                         }
                     } else {
                         quranApp.classList.add('hidden');
                         scheduleApp.classList.remove('hidden');
+                        
+                        if (!fromHistory && window.location.hash === '#quran') {
+                            history.pushState(null, '', window.location.pathname);
+                        }
                     }
                 };
 
