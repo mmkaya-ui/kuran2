@@ -21,10 +21,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Ders Programı">
-    <meta name="mobile-web-app-capable" content="yes">
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -888,10 +885,6 @@
                 const timer = setTimeout(() => {
                     nextAyahs.forEach(ayah => {
                         if (ayah.audio) {
-                            // Tarayıcı cache'ine al
-                            const img = new Image(); // Hack for some mobile browsers to force connection
-                            img.src = ayah.audio;
-                            // Veya standart fetch
                             fetch(ayah.audio, { priority: 'low' }).catch(() => { });
                         }
                     });
@@ -1033,11 +1026,12 @@
             // Load Initial Data & Settings
             useEffect(() => {
                 const savedPlaylists = localStorage.getItem('quran_playlists');
-                if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
+                if (savedPlaylists) { try { setPlaylists(JSON.parse(savedPlaylists)); } catch(e) { localStorage.removeItem('quran_playlists'); } }
 
                 const savedBookmarkRaw = localStorage.getItem('quran_bookmark');
                 if (savedBookmarkRaw) {
-                    const b = JSON.parse(savedBookmarkRaw);
+                    let b; try { b = JSON.parse(savedBookmarkRaw); } catch(e) { localStorage.removeItem('quran_bookmark'); }
+                    if (b) {
                     setBookmark(b);
                     // Legacy fix for bookmarks
                     if (b.number && !b.numberInSurah) {
@@ -1052,6 +1046,7 @@
                             })
                             .catch(console.error);
                     }
+                  } // end if (b)
                 }
 
                 setLoading(true);
@@ -1206,10 +1201,6 @@
                 } else {
                     setIsPlaying(false);
                 }
-            };
-
-            const seek = (time) => {
-                audioRef.current.currentTime = time;
             };
 
             const playNext = () => {
@@ -1593,6 +1584,7 @@
 
             useEffect(() => {
                 setFootnotes([]);
+                setDiyanetTafsir(null);
             }, [ayahData.surahNumber, ayahData.numberInSurah]);
 
             useEffect(() => {
@@ -1678,6 +1670,8 @@
             const [showModal, setShowModal] = useState(false);
             const [newPlaylist, setNewPlaylist] = useState("");
 
+            const closeModal = () => { setShowModal(false); setNewPlaylist(""); };
+
             const handleAddToPlaylist = (playlistId) => {
                 setPlaylists(prev => prev.map(p => {
                     if (p.id === playlistId && !p.items.some(i => i.number === ayahData.number)) {
@@ -1685,7 +1679,7 @@
                     }
                     return p;
                 }));
-                setShowModal(false);
+                closeModal();
             };
 
             const removeFromPlaylist = () => {
@@ -1756,7 +1750,7 @@
                                 <div className="absolute right-0 top-8 z-50 w-48 bg-white dark:bg-black rounded-lg shadow-xl border border-gray-200 dark:border-neutral-800 p-2 fade-in">
                                     <div className="flex justify-between items-center mb-2 pb-2 border-b dark:border-neutral-800">
                                         <span className="text-xs font-bold">Listeye Ekle</span>
-                                        <button onClick={() => setShowModal(false)}><i className="fa-solid fa-xmark text-gray-400"></i></button>
+                                        <button onClick={closeModal}><i className="fa-solid fa-xmark text-gray-400"></i></button>
                                     </div>
                                     <ul className="max-h-32 overflow-y-auto mb-2">
                                         {playlists.map(p => (
@@ -1765,7 +1759,7 @@
                                     </ul>
                                     <div className="flex gap-1">
                                         <input type="text" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Yeni Liste" className="w-full text-xs p-1 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                                        <button onClick={() => { if (newPlaylist) { const p = { id: Date.now(), name: newPlaylist, items: [ayahData] }; setPlaylists([...playlists, p]); setNewPlaylist(""); setShowModal(false); } }} className="bg-emerald-600 text-white px-2 rounded hover:bg-emerald-700"><i className="fa-solid fa-plus text-xs"></i></button>
+                                        <button onClick={() => { if (newPlaylist) { const p = { id: Date.now(), name: newPlaylist, items: [ayahData] }; setPlaylists([...playlists, p]); closeModal(); } }} className="bg-emerald-600 text-white px-2 rounded hover:bg-emerald-700"><i className="fa-solid fa-plus text-xs"></i></button>
                                     </div>
                                 </div>
                             )}
@@ -1920,9 +1914,9 @@
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                             <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shrink-0 h-8 border border-gray-200 dark:border-gray-700 shadow-inner">
-                                <button onClick={() => setPlaybackRate(prev => Math.max(0.5, prev - 0.25))} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat">-</button>
+                                <button onClick={() => setPlaybackRate(prev => Math.round(Math.max(0.5, prev - 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat">-</button>
                                 <span className="w-8 text-center text-[10px] font-bold text-emerald-600 select-none">{playbackRate}x</span>
-                                <button onClick={() => setPlaybackRate(prev => Math.min(2.0, prev + 0.25))} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır">+</button>
+                                <button onClick={() => setPlaybackRate(prev => Math.round(Math.min(2.0, prev + 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır">+</button>
                             </div>
                             <button onClick={() => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none')} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${repeatMode !== 'none' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={repeatMode === 'none' ? "Tekrar Kapalı" : repeatMode === 'one' ? "Tek Ayeti Tekrarla" : "Tüm Listeyi Tekrarla"}>
                                 <i className="fa-solid fa-repeat text-xs"></i>
