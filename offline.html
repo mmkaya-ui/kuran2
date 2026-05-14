@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Çevrimdışı — Ders Programı</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Inter, system-ui, sans-serif;
+            background: #f3f4f6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 24px;
+            color: #374151;
+        }
+        .card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 40px 32px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        h1 { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #111827; }
+        p  { font-size: 14px; color: #6b7280; line-height: 1.6; margin-bottom: 24px; }
+        button {
+            background: #047857;
+            color: #fff;
+            border: none;
+            border-radius: 99px;
+            padding: 12px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:active { opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">📵</div>
+        <h1>İnternet bağlantısı yok</h1>
+        <p>Uygulamayı kullanmak için internet bağlantısı gerekiyor. Bağlandıktan sonra tekrar deneyin.</p>
+        <button onclick="window.location.reload()">Tekrar Dene</button>
+    </div>
+</body>
+</html>

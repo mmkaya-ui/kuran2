@@ -1,9 +1,10 @@
-const CACHE_NAME = 'quran-v5';
-const DYNAMIC_CACHE_NAME = 'quran-app-dynamic-v5';
+const CACHE_NAME = 'quran-v6';
+const DYNAMIC_CACHE_NAME = 'quran-app-dynamic-v6';
 
 const STATIC_ASSETS = [
     './',
     './index.html',
+    './offline.html',
     './manifest.json',
     './favicon.png',
     './icon-192.png',
@@ -11,6 +12,13 @@ const STATIC_ASSETS = [
     './icon-96.png',
     './apple-touch-icon.png'
 ];
+
+// Skip waiting when prompted by update banner
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
 
 // Install Event - Precache static assets
 self.addEventListener('install', (event) => {
@@ -118,7 +126,7 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // 6. Static Assets & App Shell — Stale-While-Revalidate
+    // 6. Static Assets & App Shell — Stale-While-Revalidate + offline fallback
     event.respondWith(
         caches.match(event.request).then((cachedResponse) => {
             const networkFetch = fetch(event.request).then((networkResponse) => {
@@ -128,7 +136,14 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 });
-            }).catch(() => cachedResponse);
+            }).catch(() => {
+                if (cachedResponse) return cachedResponse;
+                // For navigation requests (HTML), serve offline page
+                if (event.request.mode === 'navigate') {
+                    return caches.match('./offline.html');
+                }
+                return new Response('', { status: 503 });
+            });
 
             return cachedResponse || networkFetch;
         })
