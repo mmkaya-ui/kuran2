@@ -858,6 +858,7 @@
             const [playbackRate, setPlaybackRate] = useState(1);
             const [repeatMode, setRepeatMode] = useState('none');
             const autoPlayAfterLoad = useRef(false);
+            const skipDisplayReset = useRef(false);
             const [pendingJump, setPendingJump] = useState(null);
             const [toastMessage, setToastMessage] = useState("");
             const toastTimerRef = useRef(null);
@@ -926,25 +927,26 @@
                         const targetAyah = ayahs.find(a => a.numberInSurah === pendingJump.ayahNumber);
 
                         if (targetAyah) {
+                            // displayLimit reset'ini jump tamamlanana kadar engelle
+                            skipDisplayReset.current = true;
+
                             // 1. Görünürlük limitini artır
                             const idx = ayahs.indexOf(targetAyah);
-                            if (idx >= displayLimit) {
-                                setDisplayLimit(idx + 10);
-                            }
+                            setDisplayLimit(idx + 10);
 
-                            // 2. Playback ve Odaklanma (Hafif gecikmeli render garantisi için)
+                            // 2. Playback ve Odaklanma
                             const capturedJump = pendingJump;
                             const jumpTimer = setTimeout(() => {
+                                setActiveAyah(targetAyah);
                                 if (capturedJump.shouldPlay) {
                                     playAyahRef.current?.(targetAyah, { forcePlay: true });
-                                } else {
-                                    setActiveAyah(targetAyah);
                                 }
-                            }, 350);
+                                skipDisplayReset.current = false;
+                            }, 400);
 
                             // İsteği temizle
                             setPendingJump(null);
-                            return () => clearTimeout(jumpTimer);
+                            return () => { clearTimeout(jumpTimer); skipDisplayReset.current = false; };
                         }
                     }
                 }
@@ -1530,7 +1532,7 @@
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, fetchDetailsForMatches, loading, loadingText, searching,
-                displayLimit, setDisplayLimit, pendingJump, setPendingJump, navigate,
+                displayLimit, setDisplayLimit, pendingJump, setPendingJump, navigate, skipDisplayReset,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
                 toastMessage, showToast
             };
@@ -1985,7 +1987,7 @@
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
-                activeAyah, displayLimit, setDisplayLimit, setPendingJump
+                activeAyah, displayLimit, setDisplayLimit, setPendingJump, skipDisplayReset
             } = useQuran();
 
             const lastScrolledAyah = useRef(null);
@@ -2022,8 +2024,8 @@
 
             const { sortedSurahs: sortedSurahsMobile } = useQuran();
 
-            // Infinite Scroll Logic — pendingJump aktifken sıfırlama, jump'ın setDisplayLimit çağrısını ezmez
-            useEffect(() => { if (!pendingJump) setDisplayLimit(10); }, [viewMode, activeSurah, searchQuery, pendingJump]);
+            // Infinite Scroll Logic — skipDisplayReset aktifken sıfırlama, jump tamamlanana kadar limit korunur
+            useEffect(() => { if (!skipDisplayReset.current) setDisplayLimit(10); }, [viewMode, activeSurah, searchQuery]);
 
             const handleLoadMore = useCallback(() => {
                 if (viewMode === 'reader' && displayLimit < ayahs.length) {
