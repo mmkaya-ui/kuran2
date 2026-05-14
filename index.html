@@ -1977,9 +1977,8 @@
                                 <button onClick={() => fetchSurah(surah)} className={`w-full text-left p-3 hover:bg-emerald-50 dark:hover:bg-gray-800 border-b border-slate-100 dark:border-neutral-800 flex justify-between items-center ${activeSurah?.number === surah.number ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 font-semibold' : 'text-slate-700 dark:text-slate-200'}`}>
                                     <div className="flex items-center gap-3">
                                         <span className="bg-slate-200 dark:bg-gray-700 dark:text-slate-200 text-xs w-6 h-6 flex items-center justify-center rounded-full">{surah.number}</span>
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="text-sm font-medium dark:text-slate-100 leading-tight">{getSurahNameTR(surah.number)}</span>
-                                            <span className="text-sm text-slate-600 dark:text-slate-300 leading-tight" style={{fontFamily:"'Amiri',serif"}}>{getSurahNameAR(surah.number)}</span>
+                                        <div className="flex flex-col">
+                                            <span className="dark:text-slate-100">{getSurahNameTR(surah.number)} <span className="text-xs text-slate-500 dark:text-slate-400" style={{fontFamily:"'Amiri',serif"}}>({getSurahNameAR(surah.number)})</span></span>
                                             {sortType !== 'mushaf' && <span className="text-[10px] text-slate-400 dark:text-slate-400">İniş: {REVELATION_ORDER_MAP[surah.number]}</span>}
                                         </div>
                                     </div>
