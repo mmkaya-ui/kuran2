@@ -1799,7 +1799,14 @@
 
                         {showNotes && (
                             <div className="mt-6 p-4 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20">
-                                <h4 className="text-xs font-bold text-amber-700 dark:text-amber-500 mb-2 flex items-center gap-2"><i className="fa-solid fa-pen-nib"></i> Notunuz</h4>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="text-xs font-bold text-amber-700 dark:text-amber-500 flex items-center gap-2"><i className="fa-solid fa-pen-nib"></i> Notunuz</h4>
+                                    {localNote && (
+                                        <button onClick={() => { saveNote(''); }} className="text-[10px] text-red-400 hover:text-red-600 flex items-center gap-1 px-2 py-0.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition">
+                                            <i className="fa-solid fa-trash text-[9px]"></i> Notu Sil
+                                        </button>
+                                    )}
+                                </div>
                                 <textarea value={localNote} onChange={(e) => saveNote(e.target.value)} placeholder="Notlarınızı buraya yazabilirsiniz..." className="w-full h-24 p-3 text-sm bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-900/30 rounded focus:ring-2 focus:ring-amber-500 outline-none resize-none dark:text-slate-200" />
                             </div>
                         )}
@@ -1992,7 +1999,7 @@
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
-                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer
+                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast
             } = useQuran();
 
             const lastScrolledAyah = useRef(null);
@@ -2241,14 +2248,62 @@
                         {/* Playlist List Mode */}
                         {!loading && viewMode === 'playlists_list' && (
                             <div className="fade-in">
-                                <div className="flex justify-between items-center mb-6">
+                                <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
                                     <h2 className="text-2xl font-bold flex items-center gap-2"><i className="fa-solid fa-layer-group text-emerald-600"></i> Listelerim</h2>
+                                    <div className="flex gap-2 flex-wrap">
+                                        <button title="Listeleri Dışa Aktar (JSON)" onClick={() => {
+                                            if (playlists.length === 0) { showToast('Kaydedilmiş liste yok.'); return; }
+                                            const blob = new Blob([JSON.stringify(playlists, null, 2)], { type: 'application/json' });
+                                            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                                            a.download = `kuran-listeler-${new Date().toISOString().slice(0,10)}.json`; a.click();
+                                            showToast(`${playlists.length} liste dışa aktarıldı.`);
+                                        }} className="flex items-center gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg font-bold shadow-sm">
+                                            <i className="fa-solid fa-file-export"></i> JSON Aktar
+                                        </button>
+                                        <label title="Listeleri İçe Aktar (JSON)" className="flex items-center gap-1.5 text-xs bg-white dark:bg-black border border-emerald-500 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 px-3 py-1.5 rounded-lg font-bold shadow-sm cursor-pointer">
+                                            <i className="fa-solid fa-file-import"></i> JSON Yükle
+                                            <input type="file" accept=".json" className="hidden" onChange={(e) => {
+                                                const file = e.target.files?.[0]; if (!file) return;
+                                                const reader = new FileReader();
+                                                reader.onload = (ev) => {
+                                                    try {
+                                                        const data = JSON.parse(ev.target.result);
+                                                        if (!Array.isArray(data)) { showToast('Geçersiz dosya.'); return; }
+                                                        setPlaylists(prev => {
+                                                            const existingIds = new Set(prev.map(p => p.id));
+                                                            const newOnes = data.filter(p => !existingIds.has(p.id));
+                                                            showToast(`${newOnes.length} liste içe aktarıldı.`);
+                                                            return [...prev, ...newOnes];
+                                                        });
+                                                    } catch { showToast('Geçersiz dosya.'); }
+                                                };
+                                                reader.readAsText(file);
+                                                e.target.value = '';
+                                            }} />
+                                        </label>
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {playlists.map(p => (
                                         <div key={p.id} onClick={() => { setActivePlaylist(p); setViewMode('playlist_view'); }} className="bg-white dark:bg-black p-4 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 cursor-pointer hover:border-emerald-400 transition relative group">
-                                            <button onClick={(e) => { e.stopPropagation(); setPlaylists(prev => prev.filter(x => x.id !== p.id)); if (activePlaylist?.id === p.id) { setActivePlaylist(null); setViewMode('playlists_list'); } }} className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-trash"></i></button>
-                                            <h3 className="font-bold text-lg">{p.name}</h3>
+                                            <div className="absolute top-2 right-2 flex gap-1">
+                                                <button title="Metin olarak aktar" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const lines = p.items.map((it, i) =>
+                                                        `${i+1}. ${it.surahName} ${it.numberInSurah}. Ayet\n` +
+                                                        `${it.text || ''}\n` +
+                                                        `${it.transliteration || ''}\n` +
+                                                        `${it.diyanet || ''}\n`
+                                                    );
+                                                    const content = `${p.name}\n${'='.repeat(p.name.length)}\n\n${lines.join('\n')}`;
+                                                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                                                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+                                                    a.download = `${p.name.replace(/[^a-z0-9]/gi,'_')}.txt`; a.click();
+                                                    showToast(`'${p.name}' metin olarak aktarıldı.`);
+                                                }} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded" ><i className="fa-solid fa-file-lines text-xs"></i></button>
+                                                <button title="Listeyi sil" onClick={(e) => { e.stopPropagation(); setPlaylists(prev => prev.filter(x => x.id !== p.id)); if (activePlaylist?.id === p.id) { setActivePlaylist(null); setViewMode('playlists_list'); } }} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><i className="fa-solid fa-trash text-xs"></i></button>
+                                            </div>
+                                            <h3 className="font-bold text-lg pr-16">{p.name}</h3>
                                             <p className="text-sm text-gray-500">{p.items.length} Ayet</p>
                                         </div>
                                     ))}
