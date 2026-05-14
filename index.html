@@ -857,12 +857,12 @@
         const QuranContext = createContext();
 
         const QuranProvider = ({ children }) => {
-            // Global Data
+            // ═══════════════════════════════════════════════════
+            // SECTION 1 — DATA & VIEW
+            // Surah/ayah data, view mode, search, loading state
+            // ═══════════════════════════════════════════════════
             const [surahs, setSurahs] = useState([]);
             const [ayahs, setAyahs] = useState([]);
-
-
-            // View State
             const [viewMode, setViewMode] = useState('reader');
             const [activeSurah, setActiveSurah] = useState(null);
             const [searchQuery, setSearchQuery] = useState('');
@@ -870,16 +870,48 @@
             const [rawMatches, setRawMatches] = useState([]);
             const [loading, setLoading] = useState(false);
             const [loadingText, setLoadingText] = useState("");
+            const [fetchError, setFetchError] = useState(null); // { surah } — set when fetchSurah fails
+            const [searching, setSearching] = useState(false);
+            const jumpTargetRef = useRef(null); // { ayahNumber, shouldPlay }
+            const skipDisplayResetRef = useRef(false);
+            const [displayLimit, setDisplayLimit] = useState(10);
+            const fullQuranIndex = useRef(null);
+
+            // ═══════════════════════════════════════════════════
+            // SECTION 2 — AUDIO & PLAYBACK
+            // Player state, audio element, playback controls
+            // ═══════════════════════════════════════════════════
+            const [activeAyah, setActiveAyah] = useState(null);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const audioRef = useRef(new Audio());
             const [playbackRate, setPlaybackRate] = useState(() => { const s = parseFloat(localStorage.getItem('quran_playbackRate')); return (s >= 0.5 && s <= 2) ? s : 1; });
             const [repeatMode, setRepeatMode] = useState(() => { const s = localStorage.getItem('quran_repeatMode'); return ['none','one','all'].includes(s) ? s : 'none'; });
             const autoPlayAfterLoad = useRef(false);
-            const jumpTargetRef = useRef(null); // { ayahNumber, shouldPlay }
-            const skipDisplayResetRef = useRef(false);
             const playNextRef = useRef(null);
             const playPrevRef = useRef(null);
             const isEndedProcessing = useRef(false);
+            const playAyahRef = useRef(null);
+
+            // ═══════════════════════════════════════════════════
+            // SECTION 3 — PLAYLIST & SELECTION
+            // ═══════════════════════════════════════════════════
+            const [playlists, setPlaylists] = useState([]);
+            const [selectedAyahs, setSelectedAyahs] = useState([]);
+            const [activePlaylistId, setActivePlaylistId] = useState(null);
+            const activePlaylist = useMemo(() => playlists.find(p => p.id === activePlaylistId) || null, [playlists, activePlaylistId]);
+            const setActivePlaylist = useCallback((p) => setActivePlaylistId(p ? p.id : null), []);
+
+            // ═══════════════════════════════════════════════════
+            // SECTION 4 — PREFERENCES & UI
+            // Font, theme, sort, bookmark, toast
+            // ═══════════════════════════════════════════════════
+            const [fontSize, setFontSize] = useState(() => { const s = parseInt(localStorage.getItem('quran_fontSize')); return (s >= 14 && s <= 32) ? s : 18; });
+            const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
+            const [sortType, setSortType] = useState(() => { const s = localStorage.getItem('quran_sortType'); return s === 'revelation' ? 'revelation' : 'mushaf'; });
+            const [bookmark, setBookmark] = useState(null);
             const [toastMessage, setToastMessage] = useState("");
             const toastTimerRef = useRef(null);
+            const loadingRef = useRef(false);
 
             const showToast = useCallback((message) => {
                 if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -941,28 +973,6 @@
                 }
             }, [ayahs]);
 
-            // Player State
-            const [activeAyah, setActiveAyah] = useState(null);
-            const [isPlaying, setIsPlaying] = useState(false);
-            const audioRef = useRef(new Audio());
-
-            // Playlist & Selection
-            const [playlists, setPlaylists] = useState([]);
-            const [selectedAyahs, setSelectedAyahs] = useState([]);
-            const [activePlaylistId, setActivePlaylistId] = useState(null);
-            // Derived — always in sync with playlists state, no manual sync needed
-            const activePlaylist = useMemo(() => playlists.find(p => p.id === activePlaylistId) || null, [playlists, activePlaylistId]);
-            const setActivePlaylist = useCallback((p) => setActivePlaylistId(p ? p.id : null), []);
-
-            // Preferences
-            const [fontSize, setFontSize] = useState(() => { const s = parseInt(localStorage.getItem('quran_fontSize')); return (s >= 14 && s <= 32) ? s : 18; });
-            const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark');
-            const [sortType, setSortType] = useState(() => { const s = localStorage.getItem('quran_sortType'); return s === 'revelation' ? 'revelation' : 'mushaf'; });
-            const [bookmark, setBookmark] = useState(null);
-
-            // UI State
-            const [displayLimit, setDisplayLimit] = useState(10);
-            const fullQuranIndex = useRef(null);
 
             // Initialize Audio
             useEffect(() => {
@@ -1148,8 +1158,6 @@
                 }
             }, [activeAyah, activeSurah]);
 
-            const loadingRef = useRef(false);
-
             // Hydrate partial items in active playlist
             useEffect(() => {
                 if (activePlaylist && activePlaylist.items.some(i => i.isPartial)) {
@@ -1196,7 +1204,6 @@
             }, [activePlaylist]);
 
             // Audio Controls
-            const playAyahRef = useRef(null);
             const playAyah = (ayah, options = {}) => {
                 const audio = audioRef.current;
 
@@ -1315,7 +1322,8 @@
                         audio: editionsData.data[8]?.ayahs[index]?.audio || ""
                     }));
                     setAyahs(combinedAyahs);
-                } catch (e) { console.error(e); setAyahs([]); showToast('Sure yüklenemedi, internet bağlantınızı kontrol edin.'); } finally { setLoading(false); }
+                    setFetchError(null);
+                } catch (e) { console.error(e); setAyahs([]); setFetchError({ surah }); showToast('Sure yüklenemedi.'); } finally { setLoading(false); }
             };
 
             const fetchDetailsForMatches = async (matchesToFetch) => {
@@ -1338,8 +1346,6 @@
                 const results = await Promise.all(promises);
                 return results.filter(r => r !== null);
             };
-
-            const [searching, setSearching] = useState(false);
 
             const handleSearch = async (queryRaw) => {
                 if (!queryRaw.trim()) { setRawMatches([]); setDetailedResults([]); setViewMode('reader'); return; }
@@ -1568,7 +1574,7 @@
                 activeAyah, setActiveAyah, isPlaying, setIsPlaying, audioRef, playAyah, playNext, playPrev, closePlayer: () => { audioRef.current.pause(); setIsPlaying(false); setActiveAyah(null); },
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
-                bookmark, fetchDetailsForMatches, loading, loadingText, searching,
+                bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
                 toastMessage, showToast
@@ -1597,7 +1603,7 @@
             const {
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
-                playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark
+                playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark, setBookmark
             } = useQuran();
 
             const [showTafsir, setShowTafsir] = useState(false);
@@ -1787,6 +1793,21 @@
                         </div>
                         <div className="flex gap-2 relative">
                             <button onClick={handleShare} aria-label="Ayeti paylaş" className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600" title="Paylaş"><i className="fa-solid fa-share-nodes text-xs"></i></button>
+                            <button
+                                onClick={() => {
+                                    const newBookmark = { surah: ayahData.surahName, number: ayahData.number, numberInSurah: ayahData.numberInSurah, surahNumber: ayahData.surahNumber };
+                                    setBookmark(newBookmark);
+                                    localStorage.setItem('quran_bookmark', JSON.stringify(newBookmark));
+                                    showToast(`Yer imi kaydedildi: ${ayahData.surahName} ${ayahData.numberInSurah}. Ayet ✓`);
+                                }}
+                                aria-label="Yer imi kaydet"
+                                title="Yer İmi Kaydet"
+                                className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${
+                                    bookmark?.number === ayahData.number
+                                        ? 'bg-amber-100 text-amber-500 dark:bg-amber-900/40 dark:text-amber-400'
+                                        : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-500'
+                                }`}
+                            ><i className="fa-solid fa-bookmark text-xs"></i></button>
                             <button onClick={() => setShowNotes(!showNotes)} aria-label={showNotes ? 'Notları gizle' : 'Not al'} aria-expanded={showNotes} className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${localNote ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-600'}`} title="Not Al"><i className={`fa-solid ${localNote ? 'fa-note-sticky' : 'fa-pen-to-square'} text-xs`}></i></button>
                             {viewMode === 'playlist_view' ? (
                                 <button onClick={removeFromPlaylist} aria-label="Listeden kaldır" className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"><i className="fa-solid fa-trash text-xs"></i></button>
@@ -2061,7 +2082,7 @@
             const {
                 viewMode, setViewMode, activeSurah, ayahs,
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
-                loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists,
+                loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
                 activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast
             } = useQuran();
@@ -2189,6 +2210,20 @@
                 <main className={`flex-1 overflow-y-auto bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-16 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
                     <div className="max-w-4xl mx-auto pb-32">
                         {loading && <div className="flex flex-col items-center justify-center h-64 text-emerald-600 animate-pulse"><i className="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p>{loadingText}</p></div>}
+
+                        {!loading && fetchError && (
+                            <div className="flex flex-col items-center justify-center h-64 gap-4 text-center">
+                                <i className="fa-solid fa-triangle-exclamation text-4xl text-red-400"></i>
+                                <p className="text-gray-600 dark:text-slate-300 font-medium">{getSurahNameTR(fetchError.surah?.number)} suresi yüklenemedi.</p>
+                                <p className="text-sm text-gray-400 dark:text-slate-500">İnternet bağlantınızı kontrol edip tekrar deneyin.</p>
+                                <button
+                                    onClick={() => fetchSurah(fetchError.surah)}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 transition-colors"
+                                >
+                                    <i className="fa-solid fa-rotate-right"></i> Tekrar Dene
+                                </button>
+                            </div>
+                        )}
 
                         {/* Mobile Surah Select - Only show in reader mode */}
                         {!loading && !searching && viewMode === 'reader' && (
