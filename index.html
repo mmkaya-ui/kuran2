@@ -1336,7 +1336,11 @@
                         setTimeout(() => {
                             setActiveAyah(target);
                             if (shouldPlay) playAyahRef.current?.(target, { forcePlay: true });
-                        }, 50);
+                            // lastScrolledAyah in MainContent may still hold this ayah's number
+                            // so the auto-scroll useEffect won't fire — scroll manually
+                            const el = document.getElementById(`ayah-${target.number}`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 200);
                     }
                     return;
                 }
