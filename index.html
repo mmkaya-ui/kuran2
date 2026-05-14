@@ -855,9 +855,6 @@
             const [rawMatches, setRawMatches] = useState([]);
             const [loading, setLoading] = useState(false);
             const [loadingText, setLoadingText] = useState("");
-            const [wordMode, setWordMode] = useState(false);
-            const [segments, setSegments] = useState([]);
-            const [currentWordIndex, setCurrentWordIndex] = useState(-1);
             const [playbackRate, setPlaybackRate] = useState(1);
             const [repeatMode, setRepeatMode] = useState('none');
             const autoPlayAfterLoad = useRef(false);
@@ -1535,7 +1532,6 @@
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, fetchDetailsForMatches, loading, loadingText, searching,
                 displayLimit, setDisplayLimit, pendingJump, setPendingJump, navigate,
-                wordMode, setWordMode, segments, setSegments, currentWordIndex, setCurrentWordIndex,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
                 toastMessage, showToast
             };
@@ -1563,7 +1559,7 @@
             const {
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
-                playlists, setPlaylists, viewMode, activePlaylist, wordMode, currentWordIndex, showToast
+                playlists, setPlaylists, viewMode, activePlaylist, showToast
             } = useQuran();
 
             const [showTafsir, setShowTafsir] = useState(false);
@@ -1719,7 +1715,6 @@
                 setActivePlaylist(updated);
             };
 
-            // Word mode handling
             const BISMILLAH_PREFIX = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ";
             let displayArabic = ayahData.text;
             let bismillahShown = false;
@@ -1729,27 +1724,12 @@
             }
 
             const ArabicText = () => {
-                if (!wordMode || !isActive) {
-                    return (
-                        <div className="space-y-2">
-                            {bismillahShown && (
-                                <div className="text-center mb-6 font-arabic text-emerald-600 dark:text-emerald-400 opacity-80" style={{ fontSize: `${fontSize * 1.8}px` }}>{BISMILLAH_PREFIX}</div>
-                            )}
-                            <p className="font-arabic text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{displayArabic}</p>
-                        </div>
-                    );
-                }
-                const words = displayArabic.split(' ');
                 return (
                     <div className="space-y-2">
                         {bismillahShown && (
                             <div className="text-center mb-6 font-arabic text-emerald-600 dark:text-emerald-400 opacity-80" style={{ fontSize: `${fontSize * 1.8}px` }}>{BISMILLAH_PREFIX}</div>
                         )}
-                        <div className="flex flex-wrap justify-end gap-x-3 gap-y-2 leading-[2.2]" dir="rtl">
-                            {words.map((word, i) => (
-                                <span key={i} className={`font-arabic transition-all duration-150 inline-block px-1 rounded ${currentWordIndex === i ? 'text-emerald-600 dark:text-emerald-400 scale-110 font-bold bg-emerald-50 dark:bg-emerald-900/20' : 'text-slate-800 dark:text-gray-100'}`} style={{ fontSize: `${fontSize + 12}px`, fontFamily: "'Amiri', serif" }}>{word}</span>
-                            ))}
-                        </div>
+                        <p className="font-arabic text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{displayArabic}</p>
                     </div>
                 );
             };
@@ -1887,7 +1867,7 @@
         });
 
         const PlayerBar = () => {
-            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, wordMode, setWordMode, setCurrentWordIndex, repeatMode, setRepeatMode } = useQuran();
+            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, repeatMode, setRepeatMode } = useQuran();
 
             // Local state for high-frequency updates
             const [currentTime, setCurrentTime] = useState(0);
@@ -1948,7 +1928,6 @@
                                 <span className="w-8 text-center text-[10px] font-bold text-emerald-600 select-none">{playbackRate}x</span>
                                 <button onClick={() => setPlaybackRate(prev => Math.round(Math.min(2.0, prev + 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır">+</button>
                             </div>
-                            <button onClick={() => { setWordMode(prev => { if (prev) setCurrentWordIndex(-1); return !prev; }); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${wordMode ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={wordMode ? 'Kelime Modu Kapalı' : 'Kelime Modu Açık'}><i className="fa-solid fa-font text-xs"></i></button>
                             <button onClick={() => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none')} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${repeatMode !== 'none' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={repeatMode === 'none' ? "Tekrar Kapalı" : repeatMode === 'one' ? "Tek Ayeti Tekrarla" : "Tüm Listeyi Tekrarla"}>
                                 <i className="fa-solid fa-repeat text-xs"></i>
                                 {repeatMode === 'one' && <span className="absolute text-[8px] font-bold bottom-1 right-1.5 bg-white dark:bg-black rounded-full w-3 h-3 flex items-center justify-center leading-none">1</span>}
