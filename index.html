@@ -839,6 +839,20 @@
             return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
         };
 
+        // --- UTILITIES ---
+        const fetchWithRetry = async (url, options = {}, retries = 3, delayMs = 500) => {
+            for (let attempt = 0; attempt < retries; attempt++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return res;
+                } catch (err) {
+                    if (attempt === retries - 1) throw err;
+                    await new Promise(r => setTimeout(r, delayMs * Math.pow(2, attempt)));
+                }
+            }
+        };
+
         // --- CONTEXT API ---
         const QuranContext = createContext();
 
@@ -867,11 +881,11 @@
             const [toastMessage, setToastMessage] = useState("");
             const toastTimerRef = useRef(null);
 
-            const showToast = (message) => {
+            const showToast = useCallback((message) => {
                 if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
                 setToastMessage(message);
                 toastTimerRef.current = setTimeout(() => setToastMessage(""), 3000);
-            };
+            }, []);
 
             // YENİ: Dinamik Önbellekleme (Aggressive Prefetching)
             // Çalan ayet değiştiğinde, sıradaki 5 ayetin ses dosyasını hemen indirir.
@@ -935,7 +949,10 @@
             // Playlist & Selection
             const [playlists, setPlaylists] = useState([]);
             const [selectedAyahs, setSelectedAyahs] = useState([]);
-            const [activePlaylist, setActivePlaylist] = useState(null);
+            const [activePlaylistId, setActivePlaylistId] = useState(null);
+            // Derived — always in sync with playlists state, no manual sync needed
+            const activePlaylist = useMemo(() => playlists.find(p => p.id === activePlaylistId) || null, [playlists, activePlaylistId]);
+            const setActivePlaylist = useCallback((p) => setActivePlaylistId(p ? p.id : null), []);
 
             // Preferences
             const [fontSize, setFontSize] = useState(() => { const s = parseInt(localStorage.getItem('quran_fontSize')); return (s >= 14 && s <= 32) ? s : 18; });
@@ -1056,7 +1073,7 @@
 
                 setLoading(true);
                 setLoadingText("Sure verileri yükleniyor...");
-                fetch(`${API_BASE}/surah`)
+                fetchWithRetry(`${API_BASE}/surah`)
                     .then(res => res.json())
                     .then(data => {
                         setSurahs(data.data);
@@ -1092,7 +1109,7 @@
                             setLoading(false);
                         }
                     })
-                    .catch(e => { console.error(e); setLoading(false); });
+                    .catch(e => { console.error(e); setLoading(false); showToast('Bağlantı hatası. Sayfayı yenileyiniz.'); });
 
                 // Initial data load handled surahs. Indexing now happens on first search.
             }, []);
@@ -1165,8 +1182,7 @@
                                 }
                                 return p;
                             }));
-
-                            setActivePlaylist(prev => prev ? { ...prev, items: updater(prev.items) } : prev);
+                            // activePlaylist is derived from playlists via useMemo — no separate sync needed
                         } catch (e) {
                             console.error("Hydration failed", e);
                         } finally {
@@ -1234,7 +1250,7 @@
             };
             playAyahRef.current = playAyah;
 
-            const playNext = () => {
+            const playNext = useCallback(() => {
                 const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
 
@@ -1251,13 +1267,14 @@
                     } else if (viewMode === 'playlist_view') showToast(`Liste bitti: ${activePlaylist?.name}`);
                     else if (viewMode === 'search') showToast("Arama sonuçları bitti.");
                 }
-            };
+            }, [viewMode, activePlaylist, detailedResults, ayahs, activeAyah, repeatMode, activeSurah, sortedSurahs, showToast]);
 
-            const playPrev = () => {
+            const playPrev = useCallback(() => {
                 const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
                 if (idx > 0) playAyahRef.current?.(list[idx - 1]);
-            };
+            }, [viewMode, activePlaylist, detailedResults, ayahs, activeAyah]);
+
             playNextRef.current = playNext;
             playPrevRef.current = playPrev;
 
@@ -1275,8 +1292,8 @@
                 try {
                     const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.tr_ozturk},${EDITIONS.tr_yildirim},${EDITIONS.tr_yuksel},${EDITIONS.audio}`;
                     const [editionsRes, metaRes] = await Promise.all([
-                        fetch(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`),
-                        fetch(`${API_BASE}/surah/${surah.number}`)
+                        fetchWithRetry(`${API_BASE}/surah/${surah.number}/editions/${editionsStr}`),
+                        fetchWithRetry(`${API_BASE}/surah/${surah.number}`)
                     ]);
 
                     const editionsData = await editionsRes.json();
@@ -1298,7 +1315,7 @@
                         audio: editionsData.data[8]?.ayahs[index]?.audio || ""
                     }));
                     setAyahs(combinedAyahs);
-                } catch (e) { console.error(e); setAyahs([]); } finally { setLoading(false); }
+                } catch (e) { console.error(e); setAyahs([]); showToast('Sure yüklenemedi, internet bağlantınızı kontrol edin.'); } finally { setLoading(false); }
             };
 
             const fetchDetailsForMatches = async (matchesToFetch) => {
@@ -1306,7 +1323,7 @@
                 const editionsStr = `${EDITIONS.arabic},${EDITIONS.transliteration},${EDITIONS.tr_diyanet},${EDITIONS.tr_yazir},${EDITIONS.tr_ates},${EDITIONS.tr_ozturk},${EDITIONS.tr_yildirim},${EDITIONS.tr_yuksel},${EDITIONS.audio}`;
                 const promises = matchesToFetch.map(async (match) => {
                     try {
-                        const res = await fetch(`${API_BASE}/ayah/${match.surah.number}:${match.numberInSurah}/editions/${editionsStr}`);
+                        const res = await fetchWithRetry(`${API_BASE}/ayah/${match.surah.number}:${match.numberInSurah}/editions/${editionsStr}`);
                         const data = await res.json();
                         const d = data.data;
                         return {
@@ -1737,9 +1754,11 @@
 
             const removeFromPlaylist = () => {
                 if (!activePlaylist) return;
-                const updated = { ...activePlaylist, items: activePlaylist.items.filter(i => i.number !== ayahData.number) };
-                setPlaylists(prev => prev.map(p => p.id === activePlaylist.id ? updated : p));
-                setActivePlaylist(updated);
+                setPlaylists(prev => prev.map(p =>
+                    p.id === activePlaylist.id
+                        ? { ...p, items: p.items.filter(i => i.number !== ayahData.number) }
+                        : p
+                ));
             };
 
             const BISMILLAH_PREFIX = "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ";
