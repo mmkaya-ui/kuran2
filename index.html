@@ -853,10 +853,12 @@
             const autoPlayAfterLoad = useRef(false);
             const [pendingJump, setPendingJump] = useState(null);
             const [toastMessage, setToastMessage] = useState("");
+            const toastTimerRef = useRef(null);
 
             const showToast = (message) => {
+                if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
                 setToastMessage(message);
-                setTimeout(() => setToastMessage(""), 3000);
+                toastTimerRef.current = setTimeout(() => setToastMessage(""), 3000);
             };
 
             // YENİ: Dinamik Önbellekleme (Aggressive Prefetching)
@@ -917,11 +919,12 @@
                             }
 
                             // 2. Playback ve Odaklanma (Hafif gecikmeli render garantisi için)
-                            setTimeout(() => {
+                            const capturedJump = pendingJump;
+                            const jumpTimer = setTimeout(() => {
                                 // ÖNCE UI'ı güncelle (Scroll timer'ı bu başlatacak)
                                 setActiveAyah(targetAyah);
 
-                                if (pendingJump.shouldPlay) {
+                                if (capturedJump.shouldPlay) {
                                     // Sesi çal ama UI'a dokunma (Zaten yukarıda güncelledik)
                                     // Bu sayede çift render ve timer iptali (scroll iptali) olmaz.
                                     playAyah(targetAyah, { onlyAudio: true, forcePlay: true });
@@ -930,6 +933,7 @@
 
                             // İsteği temizle
                             setPendingJump(null);
+                            return () => clearTimeout(jumpTimer);
                         }
                     }
                 }
@@ -1759,7 +1763,7 @@
                                     </ul>
                                     <div className="flex gap-1">
                                         <input type="text" value={newPlaylist} onChange={(e) => setNewPlaylist(e.target.value)} placeholder="Yeni Liste" className="w-full text-xs p-1 rounded border dark:bg-gray-700 dark:border-gray-600 dark:text-white" />
-                                        <button onClick={() => { if (newPlaylist) { const p = { id: Date.now(), name: newPlaylist, items: [ayahData] }; setPlaylists([...playlists, p]); closeModal(); } }} className="bg-emerald-600 text-white px-2 rounded hover:bg-emerald-700"><i className="fa-solid fa-plus text-xs"></i></button>
+                                        <button onClick={() => { if (newPlaylist) { const p = { id: Date.now(), name: newPlaylist, items: [ayahData] }; setPlaylists(prevPlaylists => [...prevPlaylists, p]); closeModal(); } }} className="bg-emerald-600 text-white px-2 rounded hover:bg-emerald-700"><i className="fa-solid fa-plus text-xs"></i></button>
                                     </div>
                                 </div>
                             )}
@@ -2272,7 +2276,7 @@
             const handleBulkAdd = () => {
                 if (!newListName) return;
                 const newP = { id: Date.now(), name: newListName, items: [...selectedAyahs] };
-                setPlaylists([...playlists, newP]);
+                setPlaylists(prev => [...prev, newP]);
                 setNewListName("");
                 showToast(`${selectedAyahs.length} ayet '${newListName}' listesine eklendi.`);
                 setSelectedAyahs([]);
