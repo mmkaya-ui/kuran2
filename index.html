@@ -923,7 +923,7 @@
 
                 if (autoPlayAfterLoad.current) {
                     autoPlayAfterLoad.current = false;
-                    playAyah(ayahs[0]);
+                    playAyahRef.current?.(ayahs[0]);
                 }
             }, [ayahs]);
 
@@ -1954,7 +1954,7 @@
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
-                activeAyah, displayLimit, setDisplayLimit, jumpTargetRef
+                activeAyah, displayLimit, setDisplayLimit, jumpTargetRef, closePlayer
             } = useQuran();
 
             const lastScrolledAyah = useRef(null);
@@ -2114,6 +2114,7 @@
                                     if (!targetSurahNum || !targetAyahNum) return;
                                     const s = surahs.find(x => x.number === targetSurahNum);
                                     if (!s) return;
+                                    closePlayer();
                                     jumpTargetRef.current = { ayahNumber: targetAyahNum, shouldPlay: true };
                                     fetchSurah(s);
                                 }} className="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 shrink-0 ml-4">Devam Et</button>
