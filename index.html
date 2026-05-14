@@ -1196,29 +1196,20 @@
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
 
                 if (idx !== -1 && idx < list.length - 1) {
-                    playAyah(list[idx + 1]);
+                    playAyahRef.current?.(list[idx + 1]);
                 } else if (idx === list.length - 1 && repeatMode === 'all') {
-                    // Listenin veya Surenin sonuna gelindiğinde ve "Tümünü Tekrarla" açıksa başa dön
-                    playAyah(list[0], { forcePlay: true });
+                    playAyahRef.current?.(list[0], { forcePlay: true });
                 } else if (viewMode === 'reader' && activeSurah && idx === list.length - 1) {
-                    // Tekrar kapalıysa ve sure bittiyse sonraki sureye geç
-                    let nextSurah = null;
                     const currentIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
-                    if (currentIdx !== -1 && currentIdx < sortedSurahs.length - 1) {
-                        nextSurah = sortedSurahs[currentIdx + 1];
-                    }
-
-                    if (nextSurah) {
-                        autoPlayAfterLoad.current = true;
-                        fetchSurah(nextSurah);
-                    }
+                    const nextSurah = (currentIdx !== -1 && currentIdx < sortedSurahs.length - 1) ? sortedSurahs[currentIdx + 1] : null;
+                    if (nextSurah) { autoPlayAfterLoad.current = true; fetchSurah(nextSurah); }
                 }
             };
 
             const playPrev = () => {
                 const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
-                if (idx > 0) playAyah(list[idx - 1]);
+                if (idx > 0) playAyahRef.current?.(list[idx - 1]);
             };
 
             const fetchSurah = async (surah) => {
@@ -1527,7 +1518,7 @@
             const {
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
-                playlists, setPlaylists, viewMode, activePlaylist, showToast
+                playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark
             } = useQuran();
 
             const [showTafsir, setShowTafsir] = useState(false);
@@ -1694,17 +1685,6 @@
                 bismillahShown = true;
             }
 
-            const ArabicText = () => {
-                return (
-                    <div className="space-y-2">
-                        {bismillahShown && (
-                            <div className="text-center mb-6 font-arabic text-emerald-600 dark:text-emerald-400 opacity-80" style={{ fontSize: `${fontSize * 1.8}px` }}>{BISMILLAH_PREFIX}</div>
-                        )}
-                        <p className="font-arabic text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{displayArabic}</p>
-                    </div>
-                );
-            };
-
             return (
                 <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-black border-slate-200 dark:border-neutral-800'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
                     <div className="bg-slate-50 dark:bg-black dark:border-b dark:border-neutral-800 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
@@ -1712,7 +1692,12 @@
                             <button onClick={toggleSelect} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
                                 {isSelected && <i className="fa-solid fa-check text-[10px]"></i>}
                             </button>
-                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">{ayahData.surahName} - {ayahData.numberInSurah}</span>
+                            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded flex items-center gap-1">
+                                {ayahData.surahName} - {ayahData.numberInSurah}
+                                {bookmark && bookmark.surahNumber === ayahData.surahNumber && bookmark.numberInSurah === ayahData.numberInSurah && !isActive && (
+                                    <span title="Kaldığın yer" className="text-amber-500 dark:text-amber-400"><i className="fa-solid fa-bookmark text-[9px]"></i></span>
+                                )}
+                            </span>
                         </div>
                         <div className="flex gap-2 relative">
                             <button onClick={handleShare} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600" title="Paylaş"><i className="fa-solid fa-share-nodes text-xs"></i></button>
@@ -1748,7 +1733,12 @@
                     </div>
                     <div className="p-6">
                         <div className="text-right mb-6 leading-loose" dir="rtl">
-                            <ArabicText />
+                            <div className="space-y-2">
+                                {bismillahShown && (
+                                    <div className="text-center mb-6 font-arabic text-emerald-600 dark:text-emerald-400 opacity-80" style={{ fontSize: `${fontSize * 1.8}px` }}>{BISMILLAH_PREFIX}</div>
+                                )}
+                                <p className="font-arabic text-slate-800 dark:text-slate-100" style={{ fontFamily: "'Amiri', serif", fontSize: `${fontSize + 12}px` }}>{displayArabic}</p>
+                            </div>
                         </div>
                         <div className="mb-6 p-3 bg-slate-50 dark:bg-gray-900/50 rounded-lg border-l-4 border-slate-300 dark:border-gray-600">
                             <h4 className="text-[10px] uppercase tracking-wider text-slate-500 mb-1 font-bold">Türkçe Okunuş</h4>
@@ -1871,6 +1861,25 @@
                 }
             };
 
+            const scrollToActiveAyah = () => {
+                const el = document.getElementById(`ayah-${activeAyah?.number}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            };
+
+            // Klavye kısayolları
+            useEffect(() => {
+                const handleKey = (e) => {
+                    if (!activeAyah) return;
+                    const tag = e.target.tagName;
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                    if (e.code === 'Space') { e.preventDefault(); playAyah(activeAyah); }
+                    else if (e.code === 'ArrowRight') { e.preventDefault(); playNext(); }
+                    else if (e.code === 'ArrowLeft') { e.preventDefault(); playPrev(); }
+                };
+                window.addEventListener('keydown', handleKey);
+                return () => window.removeEventListener('keydown', handleKey);
+            }, [activeAyah, isPlaying]);
+
             if (!activeAyah) return null;
 
             return (
@@ -1890,9 +1899,9 @@
                     </div>
 
                     <div className="flex items-center justify-between px-2 pb-1">
-                        <div className="flex-1 min-w-0 pr-4">
-                            <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">{activeAyah.surahName} {activeAyah.numberInSurah}. Ayet</h3>
-                        </div>
+                        <button onClick={scrollToActiveAyah} className="flex-1 min-w-0 pr-4 text-left group" title="Ayete git">
+                            <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate group-hover:text-emerald-600 transition-colors">{activeAyah.surahName} {activeAyah.numberInSurah}. Ayet <i className="fa-solid fa-location-crosshairs text-[9px] opacity-0 group-hover:opacity-60 transition-opacity"></i></h3>
+                        </button>
                         <div className="flex items-center gap-3 shrink-0">
                             <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shrink-0 h-8 border border-gray-200 dark:border-gray-700 shadow-inner">
                                 <button onClick={() => setPlaybackRate(prev => Math.round(Math.max(0.5, prev - 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat">-</button>
