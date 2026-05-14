@@ -1027,6 +1027,44 @@
                     navigator.mediaSession.setActionHandler('nexttrack', () => playNextRef.current?.());
                 }
             }, []);
+
+            // Screen Wake Lock — prevent screen from sleeping during playback
+            // Supported: Android Chrome, Samsung Internet. iOS Safari: no WakeLock API, no workaround needed
+            // (iOS keeps screen on during active audio in PWA mode natively)
+            useEffect(() => {
+                if (!('wakeLock' in navigator)) return;
+                let wakeLockSentinel = null;
+
+                const acquire = async () => {
+                    try {
+                        wakeLockSentinel = await navigator.wakeLock.request('screen');
+                    } catch (e) {
+                        // Silently ignore — low battery or permission denied
+                    }
+                };
+
+                const release = () => {
+                    wakeLockSentinel?.release();
+                    wakeLockSentinel = null;
+                };
+
+                // Re-acquire after tab becomes visible again (browser releases lock on hide)
+                const onVisibilityChange = () => {
+                    if (document.visibilityState === 'visible' && isPlaying) acquire();
+                };
+
+                if (isPlaying) {
+                    acquire();
+                    document.addEventListener('visibilitychange', onVisibilityChange);
+                } else {
+                    release();
+                }
+
+                return () => {
+                    release();
+                    document.removeEventListener('visibilitychange', onVisibilityChange);
+                };
+            }, [isPlaying]);
             
             // Handle playbackRate changes instantly — also re-apply after loadedmetadata
             // because some browsers reset playbackRate to 1 when src changes
