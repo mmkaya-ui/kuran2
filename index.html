@@ -1773,7 +1773,7 @@
                 <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-black border-slate-200 dark:border-neutral-800'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
                     <div className="bg-slate-50 dark:bg-black dark:border-b dark:border-neutral-800 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <button onClick={toggleSelect} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
+                            <button onClick={toggleSelect} aria-label={isSelected ? 'Ayeti seçimden kaldır' : 'Ayeti seç'} aria-pressed={isSelected} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
                                 {isSelected && <i className="fa-solid fa-check text-[10px]"></i>}
                             </button>
                             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-1 rounded">
@@ -1786,12 +1786,12 @@
                             )}
                         </div>
                         <div className="flex gap-2 relative">
-                            <button onClick={handleShare} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600" title="Paylaş"><i className="fa-solid fa-share-nodes text-xs"></i></button>
-                            <button onClick={() => setShowNotes(!showNotes)} className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${localNote ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-600'}`} title="Not Al"><i className={`fa-solid ${localNote ? 'fa-note-sticky' : 'fa-pen-to-square'} text-xs`}></i></button>
+                            <button onClick={handleShare} aria-label="Ayeti paylaş" className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600" title="Paylaş"><i className="fa-solid fa-share-nodes text-xs"></i></button>
+                            <button onClick={() => setShowNotes(!showNotes)} aria-label={showNotes ? 'Notları gizle' : 'Not al'} aria-expanded={showNotes} className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${localNote ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-600'}`} title="Not Al"><i className={`fa-solid ${localNote ? 'fa-note-sticky' : 'fa-pen-to-square'} text-xs`}></i></button>
                             {viewMode === 'playlist_view' ? (
-                                <button onClick={removeFromPlaylist} className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"><i className="fa-solid fa-trash text-xs"></i></button>
+                                <button onClick={removeFromPlaylist} aria-label="Listeden kaldır" className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"><i className="fa-solid fa-trash text-xs"></i></button>
                             ) : (
-                                <button onClick={() => setShowModal(true)} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600"><i className="fa-solid fa-folder-plus text-xs"></i></button>
+                                <button onClick={() => setShowModal(true)} aria-label="Listeye ekle" className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600"><i className="fa-solid fa-folder-plus text-xs"></i></button>
                             )}
                             <button onClick={togglePlay} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${isActive && isPlaying ? 'bg-amber-100 text-amber-700 animate-pulse' : 'bg-slate-200 text-slate-700 hover:bg-emerald-100 hover:text-emerald-700 dark:bg-gray-700 dark:text-slate-300'}`}>
                                 {isActive && isPlaying ? <><i className="fa-solid fa-pause"></i> Duraklat</> : <><i className="fa-solid fa-play"></i> Dinle</>}
@@ -1982,7 +1982,7 @@
             if (!activeAyah) return null;
 
             return (
-                <div className="fixed bottom-2 left-2 right-2 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[600px] bg-white dark:bg-black border border-emerald-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-3 z-50 flex flex-col gap-2 transition-transform duration-300 pb-[calc(env(safe-area-inset-bottom)+4px)]">
+                <div role="region" aria-label="Ses çalar" className="fixed bottom-2 left-2 right-2 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[600px] bg-white dark:bg-black border border-emerald-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-3 z-50 flex flex-col gap-2 transition-transform duration-300 pb-[calc(env(safe-area-inset-bottom)+4px)]">
                     {/* Progress Bar */}
                     <div className="w-full flex items-center gap-2 px-2">
                         <span className="text-[10px] text-gray-500 dark:text-slate-400 font-mono w-8 text-right">{formatTime(currentTime)}</span>
@@ -1992,31 +1992,32 @@
                             max={duration || 100}
                             value={currentTime}
                             onChange={(e) => seek(Number(e.target.value))}
+                            aria-label="Ses ilerleme çubuğu"
                             className="flex-1 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-emerald-600"
                         />
                         <span className="text-[10px] text-gray-500 dark:text-slate-400 font-mono w-8">{formatTime(duration)}</span>
                     </div>
 
                     <div className="flex items-center justify-between px-2 pb-1">
-                        <button onClick={scrollToActiveAyah} className="flex-1 min-w-0 pr-4 text-left group" title="Ayete git">
+                        <button onClick={scrollToActiveAyah} className="flex-1 min-w-0 pr-4 text-left group" title="Ayete git" aria-label={`${activeAyah.surahName} ${activeAyah.numberInSurah}. ayete git`}>
                             <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate group-hover:text-emerald-600 transition-colors">{activeAyah.surahName} {activeAyah.numberInSurah}. Ayet <i className="fa-solid fa-location-crosshairs text-[9px] opacity-0 group-hover:opacity-60 transition-opacity"></i></h3>
                         </button>
                         <div className="flex items-center gap-3 shrink-0">
                             <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shrink-0 h-8 border border-gray-200 dark:border-gray-700 shadow-inner">
-                                <button onClick={() => setPlaybackRate(prev => Math.round(Math.max(0.5, prev - 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat">-</button>
-                                <span className="w-8 text-center text-[10px] font-bold text-emerald-600 select-none">{playbackRate}x</span>
-                                <button onClick={() => setPlaybackRate(prev => Math.round(Math.min(2.0, prev + 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır">+</button>
+                                <button onClick={() => setPlaybackRate(prev => Math.round(Math.max(0.5, prev - 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Yavaşlat" aria-label="Oynatma hızını azalt">-</button>
+                                <span className="w-8 text-center text-[10px] font-bold text-emerald-600 select-none" aria-label={`Oynatma hızı: ${playbackRate}x`}>{playbackRate}x</span>
+                                <button onClick={() => setPlaybackRate(prev => Math.round(Math.min(2.0, prev + 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır" aria-label="Oynatma hızını artır">+</button>
                             </div>
-                            <button onClick={() => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none')} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${repeatMode !== 'none' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={repeatMode === 'none' ? "Tekrar Kapalı" : repeatMode === 'one' ? "Tek Ayeti Tekrarla" : "Tüm Listeyi Tekrarla"}>
+                            <button onClick={() => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none')} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${repeatMode !== 'none' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={repeatMode === 'none' ? "Tekrar Kapalı" : repeatMode === 'one' ? "Tek Ayeti Tekrarla" : "Tüm Listeyi Tekrarla"} aria-label={repeatMode === 'none' ? 'Tekrar kapalı, tekrar modunu değiştir' : repeatMode === 'one' ? 'Tek ayet tekrar modu, değiştir' : 'Tüm liste tekrar modu, değiştir'} aria-pressed={repeatMode !== 'none'}>
                                 <i className="fa-solid fa-repeat text-xs"></i>
                                 {repeatMode === 'one' && <span className="absolute text-[8px] font-bold bottom-1 right-1.5 bg-white dark:bg-black rounded-full w-3 h-3 flex items-center justify-center leading-none">1</span>}
                             </button>
-                            <button onClick={playPrev} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-backward-step text-xs"></i></button>
-                            <button onClick={() => playAyah(activeAyah)} className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg active:scale-95">
+                            <button onClick={playPrev} aria-label="Önceki ayet" className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-backward-step text-xs"></i></button>
+                            <button onClick={() => playAyah(activeAyah)} aria-label={isPlaying ? 'Duraklat' : 'Oynat'} className="w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center shadow-lg active:scale-95">
                                 {isPlaying ? <i className="fa-solid fa-pause"></i> : <i className="fa-solid fa-play ml-1"></i>}
                             </button>
-                            <button onClick={playNext} className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-forward-step text-xs"></i></button>
-                            <button onClick={closePlayer} className="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center ml-2"><i className="fa-solid fa-xmark"></i></button>
+                            <button onClick={playNext} aria-label="Sonraki ayet" className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-forward-step text-xs"></i></button>
+                            <button onClick={closePlayer} aria-label="Çaları kapat" className="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center ml-2"><i className="fa-solid fa-xmark"></i></button>
                         </div>
                     </div>
                 </div>
@@ -2031,7 +2032,7 @@
                 <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-black dark:border-neutral-800 w-full md:w-64 flex-shrink-0 hidden md:block">
                     <div className="p-4 border-b border-slate-200 dark:border-neutral-800 bg-white dark:bg-black sticky top-0 z-10 flex justify-between items-center">
                         <h2 className="font-bold text-slate-700 dark:text-slate-200"><i className="fa-solid fa-book-open text-emerald-600 mr-2"></i> Sureler</h2>
-                        <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-200 px-2 py-1 rounded hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1">
+                        <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} aria-label={sortType === 'mushaf' ? 'İniş sırasına göre sırala' : 'Mushaf sırasına göre sırala'} className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-200 px-2 py-1 rounded hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1">
                             <i className={`fa-solid ${sortType === 'mushaf' ? 'fa-arrow-down-1-9' : 'fa-clock-rotate-left'}`}></i>
                             {sortType === 'mushaf' ? 'Sıra' : 'İniş'}
                         </button>
@@ -2039,7 +2040,7 @@
                     <ul>
                         {sortedSurahs.map((surah) => (
                             <li key={surah.number}>
-                                <button onClick={() => fetchSurah(surah)} className={`w-full text-left p-3 hover:bg-emerald-50 dark:hover:bg-gray-800 border-b border-slate-100 dark:border-neutral-800 flex justify-between items-center ${activeSurah?.number === surah.number ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 font-semibold' : 'text-slate-700 dark:text-slate-200'}`}>
+                                <button onClick={() => fetchSurah(surah)} aria-label={`${surah.englishName} suresi${activeSurah?.number === surah.number ? ', aktif sure' : ''}`} aria-current={activeSurah?.number === surah.number ? 'true' : undefined} className={`w-full text-left p-3 hover:bg-emerald-50 dark:hover:bg-gray-800 border-b border-slate-100 dark:border-neutral-800 flex justify-between items-center ${activeSurah?.number === surah.number ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 font-semibold' : 'text-slate-700 dark:text-slate-200'}`}>
                                     <div className="flex items-center gap-3">
                                         <span className="bg-slate-200 dark:bg-gray-700 dark:text-slate-200 text-xs w-6 h-6 flex items-center justify-center rounded-full">{surah.number}</span>
                                         <div className="flex flex-col">
@@ -2479,15 +2480,15 @@
                     <header className="bg-emerald-700 dark:bg-emerald-900 text-white px-4 pb-2 shadow-lg z-20 sticky top-0 border-b border-transparent dark:border-emerald-800">
                         <div className="max-w-md mx-auto relative pt-2">
                             <div className="absolute right-0 top-1.5 flex items-center gap-1.5">
-                                <button onClick={() => setShowHelp(true)} className="bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500" title="Kullanım Rehberi">
+                                <button onClick={() => setShowHelp(true)} aria-label="Kullanım rehberini aç" className="bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500" title="Kullanım Rehberi">
                                     <i className="fa-solid fa-circle-question text-xs"></i>
                                 </button>
-                                <button onClick={() => setDarkMode(!darkMode)} className="bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500">
+                                <button onClick={() => setDarkMode(!darkMode)} aria-label={darkMode ? 'Açık temaya geç' : 'Koyu temaya geç'} aria-pressed={darkMode} className="bg-emerald-600 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-emerald-500 transition border border-emerald-500">
                                     {darkMode ? <i className="fa-solid fa-sun text-xs"></i> : <i className="fa-solid fa-moon text-xs"></i>}
                                 </button>
                             </div>
                             <div className="mb-2 flex items-center gap-3 pr-20">
-                                <button onClick={goBack} className="bg-emerald-800 p-2 rounded-lg hover:bg-emerald-600 transition h-9 w-9 flex items-center justify-center"><i className="fa-solid fa-arrow-left text-sm"></i></button>
+                                <button onClick={goBack} aria-label="Ana sayfaya dön" className="bg-emerald-800 p-2 rounded-lg hover:bg-emerald-600 transition h-9 w-9 flex items-center justify-center"><i className="fa-solid fa-arrow-left text-sm"></i></button>
                                 <div>
                                     <h1 className="text-xl font-bold mb-0.5 flex items-center leading-none"><i className="fa-solid fa-book-open mr-2 text-sm"></i> Kuran Rehberi</h1>
                                     <p className="text-emerald-100 text-[11px] opacity-90 leading-none">Oku, Dinle, Araştır</p>
@@ -2495,11 +2496,11 @@
                             </div>
                             <div className="flex gap-2 items-center mb-2">
                                 <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchQuery); }} className="relative group flex-1">
-                                    <input type="text" placeholder="Ara (Örn: namaz, bakara)..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full p-2 pl-9 pr-8 rounded-lg text-sm text-gray-800 dark:bg-black dark:text-white border-0 focus:ring-2 focus:ring-emerald-400 shadow-sm dark:border dark:border-neutral-700" />
-                                    <button type="submit" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 hover:text-emerald-500"><i className="fa-solid fa-search text-sm"></i></button>
-                                    {searchQuery && <button type="button" onClick={() => { setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setViewMode('reader'); }} className="absolute right-0 top-0 h-full w-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-xmark text-sm"></i></button>}
+                                    <input type="text" placeholder="Ara (Örn: namaz, bakara)..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} aria-label="Ayet veya sure ara" className="w-full p-2 pl-9 pr-8 rounded-lg text-sm text-gray-800 dark:bg-black dark:text-white border-0 focus:ring-2 focus:ring-emerald-400 shadow-sm dark:border dark:border-neutral-700" />
+                                    <button type="submit" aria-label="Ara" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 hover:text-emerald-500"><i className="fa-solid fa-search text-sm"></i></button>
+                                    {searchQuery && <button type="button" aria-label="Aramayı temizle" onClick={() => { setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setViewMode('reader'); }} className="absolute right-0 top-0 h-full w-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-xmark text-sm"></i></button>}
                                 </form>
-                                <button onClick={() => setViewMode('playlists_list')} className="bg-emerald-800 text-white px-2 py-1 rounded-lg flex flex-col items-center justify-center shadow-sm hover:bg-emerald-600 transition border border-emerald-600/30 min-w-[48px]">
+                                <button onClick={() => setViewMode('playlists_list')} aria-label="Listelerim" className="bg-emerald-800 text-white px-2 py-1 rounded-lg flex flex-col items-center justify-center shadow-sm hover:bg-emerald-600 transition border border-emerald-600/30 min-w-[48px]">
                                     <i className="fa-solid fa-layer-group text-sm"></i>
                                     <span className="text-[9px] font-bold leading-tight mt-0.5 whitespace-nowrap">Listelerim</span>
                                 </button>
@@ -2542,9 +2543,9 @@
                                 </div>
                                 <div className="flex items-center bg-emerald-800 rounded-lg px-2 py-1 gap-2 border border-emerald-600/30">
                                     <i className="fa-solid fa-font text-emerald-200 ml-1 text-[10px]"></i>
-                                    <button onClick={() => setFontSize(prev => Math.max(14, prev - 2))} className="w-6 h-6 flex items-center justify-center bg-emerald-600 rounded-md text-xs hover:bg-emerald-500 font-bold">-</button>
-                                    <span className="text-xs font-mono w-4 text-center">{fontSize}</span>
-                                    <button onClick={() => setFontSize(prev => Math.min(32, prev + 2))} className="w-6 h-6 flex items-center justify-center bg-emerald-600 rounded-md text-xs hover:bg-emerald-500 font-bold">+</button>
+                                    <button onClick={() => setFontSize(prev => Math.max(14, prev - 2))} aria-label="Yazı boyutunu küçült" className="w-6 h-6 flex items-center justify-center bg-emerald-600 rounded-md text-xs hover:bg-emerald-500 font-bold">-</button>
+                                    <span className="text-xs font-mono w-4 text-center" aria-label={`Yazı boyutu: ${fontSize}`}>{fontSize}</span>
+                                    <button onClick={() => setFontSize(prev => Math.min(32, prev + 2))} aria-label="Yazı boyutunu büyüt" className="w-6 h-6 flex items-center justify-center bg-emerald-600 rounded-md text-xs hover:bg-emerald-500 font-bold">+</button>
                                 </div>
                             </div>
                         </div>
