@@ -1305,6 +1305,8 @@
                 return results.filter(r => r !== null);
             };
 
+            const [searching, setSearching] = useState(false);
+
             const handleSearch = async (queryRaw) => {
                 if (!queryRaw.trim()) return;
                 setSearching(true); setViewMode('search'); setRawMatches([]); setDetailedResults([]);
@@ -1357,7 +1359,7 @@
                             } catch (err) {
                                 console.error("Indexing failed:", err);
                                 alert("Arama hazırlanamadı: " + err.message);
-                                setSearching(false); return;
+                                setSearching(false); setViewMode('reader'); return;
                             }
                         }
                     }
@@ -1461,9 +1463,6 @@
                     })();
                 }
             }, [sortType]);
-
-            // Set searching state locally in Search component, but expose logic here
-            const [searching, setSearching] = useState(false);
 
             // Navigation Helper — only pushes history when Quran view is active
             const navigate = (view, extraState = {}) => {
@@ -1588,6 +1587,10 @@
             };
 
             useEffect(() => {
+                setFootnotes([]);
+            }, [ayahData.surahNumber, ayahData.numberInSurah]);
+
+            useEffect(() => {
                 if (showTafsir && footnotes.length === 0) {
                     setLoadingFootnotes(true);
                     fetch(`https://api.acikkuran.com/surah/${ayahData.surahNumber}/verse/${ayahData.numberInSurah}?author=105`)
@@ -1684,6 +1687,7 @@
                 if (!activePlaylist) return;
                 const updated = { ...activePlaylist, items: activePlaylist.items.filter(i => i.number !== ayahData.number) };
                 setPlaylists(prev => prev.map(p => p.id === activePlaylist.id ? updated : p));
+                setActivePlaylist(updated);
             };
 
             // Word mode handling
@@ -2090,7 +2094,7 @@
                 return [];
             }, [viewMode, ayahs, displayLimit, detailedResults, activePlaylist]);
 
-            const showContinueReading = !loading && !searching && viewMode === 'reader' && bookmark && bookmark.number !== activeSurah?.number && bookmark.surahNumber !== activeSurah?.number;
+            const showContinueReading = !loading && !searching && viewMode === 'reader' && bookmark && bookmark.surahNumber && bookmark.surahNumber !== activeSurah?.number;
 
             return (
                 <main className="flex-1 overflow-y-auto bg-slate-100 dark:bg-black p-4 md:p-8 pt-16 md:pt-8 scroll-smooth" id="main-scroll">
@@ -2216,8 +2220,8 @@
                                     </div>
                                 )}
 
-                                {itemsToRender.map((ayah, i) => (
-                                    <AyahCard key={`${ayah.number}-${i}`} ayahData={ayah} />
+                                {itemsToRender.map((ayah) => (
+                                    <AyahCard key={ayah.number} ayahData={ayah} />
                                 ))}
 
                                 {(viewMode === 'reader' && displayLimit < ayahs.length) || (viewMode === 'search' && detailedResults.length < rawMatches.length) ? (
@@ -2331,7 +2335,7 @@
                                 <h3 className="font-bold mb-4 dark:text-white">Seçilenleri Listeye Ekle</h3>
                                 <input type="text" placeholder="Yeni Liste Adı" value={newListName} onChange={(e) => setNewListName(e.target.value)} className="w-full p-2 border rounded mb-4 dark:bg-gray-900 dark:border-gray-700 dark:text-white" />
                                 <div className="flex justify-end gap-2">
-                                    <button onClick={() => setPlaylistModal(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">İptal</button>
+                                    <button onClick={() => { setPlaylistModal(false); setNewListName(""); }} className="px-4 py-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">İptal</button>
                                     <button onClick={handleBulkAdd} className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Oluştur ve Ekle</button>
                                 </div>
                                 <div className="mt-4 pt-4 border-t dark:border-gray-700">
