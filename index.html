@@ -1508,7 +1508,7 @@
             const value = {
                 surahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah,
                 searchQuery, setSearchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults,
-                activeAyah, setActiveAyah, isPlaying, setIsPlaying, audioRef, playAyah, playNext, playPrev, closePlayer: () => { audioRef.current.pause(); setActiveAyah(null); },
+                activeAyah, setActiveAyah, isPlaying, setIsPlaying, audioRef, playAyah, playNext, playPrev, closePlayer: () => { audioRef.current.pause(); setIsPlaying(false); setActiveAyah(null); },
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
                 fontSize, setFontSize, darkMode, setDarkMode, sortType, setSortType,
                 bookmark, fetchDetailsForMatches, loading, loadingText, searching,
@@ -1606,7 +1606,7 @@
             }, [showTafsir, ayahData.surahNumber, ayahData.numberInSurah]);
 
             const globalID = getGlobalAyahID(ayahData.surahNumber, ayahData.numberInSurah);
-            const normalizedSurahName = ayahData.surahName.replace(/\s+/g, '-');
+            const normalizedSurahName = encodeURIComponent(ayahData.surahName.toLowerCase().replace(/\s+/g, '-'));
             const diyanetUrl = `https://kuran.diyanet.gov.tr/tefsir/${normalizedSurahName}-suresi/${globalID}/${ayahData.numberInSurah}-ayet-tefsiri`;
 
             const fetchDiyanetTafsir = async () => {
@@ -1623,9 +1623,13 @@
                     const tefsirDiv = doc.querySelector('.tefsir-text');
                     
                     if (tefsirDiv) {
-                        // Gereksiz boşlukları ve scriptleri temizle
+                        // Gereksiz boşlukları ve scriptleri temizle, event handler'ları kaldır
                         const cleanText = tefsirDiv.innerHTML
                             .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
+                            .replace(/<iframe\b[^>]*>([\s\S]*?)<\/iframe>/gim, "")
+                            .replace(/\s*on\w+="[^"]*"/gi, "")
+                            .replace(/\s*on\w+='[^']*'/gi, "")
+                            .replace(/href="javascript:[^"]*"/gi, "href=\"#\"")
                             .replace(/style="[^"]*"/g, "")
                             .replace(/class="[^"]*"/g, "");
                         setDiyanetTafsir(cleanText);
@@ -1861,7 +1865,7 @@
         });
 
         const PlayerBar = () => {
-            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, wordMode, setWordMode, repeatMode, setRepeatMode } = useQuran();
+            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, wordMode, setWordMode, setCurrentWordIndex, repeatMode, setRepeatMode } = useQuran();
 
             // Local state for high-frequency updates
             const [currentTime, setCurrentTime] = useState(0);
@@ -1922,6 +1926,7 @@
                                 <span className="w-8 text-center text-[10px] font-bold text-emerald-600 select-none">{playbackRate}x</span>
                                 <button onClick={() => setPlaybackRate(prev => Math.round(Math.min(2.0, prev + 0.25) * 100) / 100)} className="w-6 h-full flex items-center justify-center text-[14px] font-bold text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-emerald-600 transition-colors" title="Hızlandır">+</button>
                             </div>
+                            <button onClick={() => { setWordMode(prev => { if (prev) setCurrentWordIndex(-1); return !prev; }); }} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${wordMode ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={wordMode ? 'Kelime Modu Kapalı' : 'Kelime Modu Açık'}><i className="fa-solid fa-font text-xs"></i></button>
                             <button onClick={() => setRepeatMode(prev => prev === 'none' ? 'one' : prev === 'one' ? 'all' : 'none')} className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors relative ${repeatMode !== 'none' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 hover:text-emerald-600'}`} title={repeatMode === 'none' ? "Tekrar Kapalı" : repeatMode === 'one' ? "Tek Ayeti Tekrarla" : "Tüm Listeyi Tekrarla"}>
                                 <i className="fa-solid fa-repeat text-xs"></i>
                                 {repeatMode === 'one' && <span className="absolute text-[8px] font-bold bottom-1 right-1.5 bg-white dark:bg-black rounded-full w-3 h-3 flex items-center justify-center leading-none">1</span>}
@@ -2033,10 +2038,13 @@
                 if (viewMode === 'reader' && displayLimit < ayahs.length) {
                     setDisplayLimit(prev => Math.min(prev + 10, ayahs.length));
                 } else if (viewMode === 'search' && detailedResults.length < rawMatches.length) {
-                    const nextBatch = rawMatches.slice(detailedResults.length, detailedResults.length + 5);
+                    const startIdx = detailedResults.length;
+                    const nextBatch = rawMatches.slice(startIdx, startIdx + 5);
                     if (nextBatch.length > 0) {
                         fetchDetailsForMatches(nextBatch).then(newDetails => {
-                            setDetailedResults(prev => [...prev, ...newDetails]);
+                            // Re-sort to preserve rawMatches order
+                            const ordered = nextBatch.map(m => newDetails.find(d => d.number === m.number)).filter(Boolean);
+                            setDetailedResults(prev => [...prev, ...ordered]);
                         });
                     }
                 }
@@ -2175,7 +2183,7 @@
                                 <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{getSurahNameTR(activeSurah?.number)}</h2>
                                 <div className="flex flex-wrap justify-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                                     <span className="bg-white dark:bg-black px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-neutral-800">{activeSurah?.numberOfAyahs} Ayet</span>
-                                    <span className="bg-white dark:bg-black px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-neutral-800">{activeSurah?.revelationType === 'Meccan' ? 'Mekke' : 'Medine'}</span>
+                                    <span className="bg-white dark:bg-black px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-neutral-800">{activeSurah?.revelationType === 'Meccan' ? 'Mekke' : activeSurah?.revelationType === 'Medinan' ? 'Medine' : '...'}</span>
                                     <span className="bg-white dark:bg-black px-3 py-1 rounded-full shadow-sm border border-gray-200 dark:border-neutral-800">İniş Sırası: {REVELATION_ORDER_MAP[activeSurah?.number]}</span>
                                 </div>
                             </div>
@@ -2208,7 +2216,7 @@
                                                         {allItemsInContext.every(item => selectedAyahs.some(s => s.number === item.number)) ? 'Seçimi Kaldır' : 'Tümünü Seç'}
                                                     </button>
                                                 )}
-                                                <button onClick={() => { setViewMode('reader'); setSearchQuery(''); }} className="text-sm text-emerald-600 hover:underline flex items-center">Listeye Dön</button>
+                                                <button onClick={() => { setViewMode('reader'); setSearchQuery(''); setRawMatches([]); setDetailedResults([]); }} className="text-sm text-emerald-600 hover:underline flex items-center">Listeye Dön</button>
                                             </div>
                                         </div>
                                     </>
@@ -2242,7 +2250,7 @@
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {playlists.map(p => (
                                         <div key={p.id} onClick={() => { setActivePlaylist(p); setViewMode('playlist_view'); }} className="bg-white dark:bg-black p-4 rounded-xl shadow-sm border border-gray-200 dark:border-neutral-800 cursor-pointer hover:border-emerald-400 transition relative group">
-                                            <button onClick={(e) => { e.stopPropagation(); setPlaylists(prev => prev.filter(x => x.id !== p.id)); }} className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-trash"></i></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setPlaylists(prev => prev.filter(x => x.id !== p.id)); if (activePlaylist?.id === p.id) { setActivePlaylist(null); setViewMode('playlists_list'); } }} className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-trash"></i></button>
                                             <h3 className="font-bold text-lg">{p.name}</h3>
                                             <p className="text-sm text-gray-500">{p.items.length} Ayet</p>
                                         </div>
