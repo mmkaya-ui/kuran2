@@ -1219,12 +1219,9 @@
                 } else if (viewMode === 'reader' && activeSurah && idx === list.length - 1) {
                     // Tekrar kapalıysa ve sure bittiyse sonraki sureye geç
                     let nextSurah = null;
-                    if (sortType === 'mushaf') {
-                        nextSurah = surahs.find(s => s.number === activeSurah.number + 1);
-                    } else {
-                        const sorted = [...surahs].sort((a, b) => (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999));
-                        const currentIdx = sorted.findIndex(s => s.number === activeSurah.number);
-                        if (currentIdx !== -1 && currentIdx < sorted.length - 1) nextSurah = sorted[currentIdx + 1];
+                    const currentIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
+                    if (currentIdx !== -1 && currentIdx < sortedSurahs.length - 1) {
+                        nextSurah = sortedSurahs[currentIdx + 1];
                     }
 
                     if (nextSurah) {
@@ -1505,8 +1502,15 @@
                 return () => { window.dispatchQuranNavigation = null; };
             }, [surahs, activeSurah, searchQuery, fetchSurah, handleSearch]); // Deps ensuring we have latest data
 
+            const sortedSurahs = useMemo(() => {
+                return [...surahs].sort((a, b) => {
+                    if (sortType === 'mushaf') return a.number - b.number;
+                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
+                });
+            }, [surahs, sortType]);
+
             const value = {
-                surahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah,
+                surahs, sortedSurahs, ayahs, viewMode, setViewMode, activeSurah, setActiveSurah, fetchSurah,
                 searchQuery, setSearchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults,
                 activeAyah, setActiveAyah, isPlaying, setIsPlaying, audioRef, playAyah, playNext, playPrev, closePlayer: () => { audioRef.current.pause(); setIsPlaying(false); setActiveAyah(null); },
                 playlists, setPlaylists, selectedAyahs, setSelectedAyahs, activePlaylist, setActivePlaylist,
@@ -1945,14 +1949,7 @@
 
 
         const SurahList = React.memo(() => {
-            const { surahs, activeSurah, fetchSurah, sortType, setSortType } = useQuran();
-
-            const sortedSurahs = useMemo(() => {
-                return [...surahs].sort((a, b) => {
-                    if (sortType === 'mushaf') return a.number - b.number;
-                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
-                });
-            }, [surahs, sortType]);
+            const { sortedSurahs, activeSurah, fetchSurah, sortType, setSortType } = useQuran();
 
             return (
                 <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-black dark:border-neutral-800 w-full md:w-64 flex-shrink-0 hidden md:block">
@@ -2024,12 +2021,7 @@
                 }
             }, [activeAyah, displayLimit, ayahs, viewMode]);
 
-            const sortedSurahsMobile = useMemo(() => {
-                return [...surahs].sort((a, b) => {
-                    if (sortType === 'mushaf') return a.number - b.number;
-                    return (REVELATION_ORDER_MAP[a.number] || 999) - (REVELATION_ORDER_MAP[b.number] || 999);
-                });
-            }, [surahs, sortType]);
+            const { sortedSurahs: sortedSurahsMobile } = useQuran();
 
             // Infinite Scroll Logic
             useEffect(() => { setDisplayLimit(10); }, [viewMode, activeSurah, searchQuery]);
