@@ -1001,11 +1001,15 @@
                 }
             }, []);
             
-            // Handle playbackRate changes instantly
+            // Handle playbackRate changes instantly — also re-apply after loadedmetadata
+            // because some browsers reset playbackRate to 1 when src changes
             useEffect(() => {
-                if (audioRef.current) {
-                    audioRef.current.playbackRate = playbackRate;
-                }
+                const audio = audioRef.current;
+                if (!audio) return;
+                audio.playbackRate = playbackRate;
+                const onLoaded = () => { audio.playbackRate = playbackRate; };
+                audio.addEventListener('loadedmetadata', onLoaded);
+                return () => audio.removeEventListener('loadedmetadata', onLoaded);
             }, [playbackRate]);
 
             // Update Media Metadata
@@ -1199,12 +1203,14 @@
                 audio.__activeAyah = ayah;
                 audio.playbackRate = playbackRate;
                 if (ayah.audio) {
-                    audio.load();
                     const playPromise = audio.play();
 
                     if (playPromise !== undefined) {
                         playPromise
-                            .then(() => { setIsPlaying(true); })
+                            .then(() => {
+                                audio.playbackRate = playbackRate; // re-apply after play resolves (some browsers reset it)
+                                setIsPlaying(true);
+                            })
                             .catch(error => {
                                 console.error("Playback error:", error);
                                 setIsPlaying(false);
