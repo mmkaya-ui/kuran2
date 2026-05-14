@@ -1185,9 +1185,9 @@
                 const audio = audioRef.current;
 
                 if (activeAyah?.number === ayah.number && !options.forcePlay) {
-                    // If audio src is already loaded for this ayah, just toggle play/pause
-                    const srcMatches = ayah.audio && audio.src && audio.src === ayah.audio;
-                    if (srcMatches) {
+                    // Only toggle play/pause if THIS ayah's audio is actually loaded
+                    // audio.__activeAyah tracks what's currently in the audio element
+                    if (audio.__activeAyah?.number === ayah.number) {
                         if (audio.paused) {
                             audio.play().then(() => setIsPlaying(true)).catch(console.error);
                         } else {
@@ -1196,7 +1196,7 @@
                         }
                         return;
                     }
-                    // Otherwise fall through to load + play (e.g. jumped to ayah without playing)
+                    // Audio element has a different (or no) src — fall through to load+play
                 }
 
                 if (!options.onlyAudio) {
