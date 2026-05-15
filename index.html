@@ -1101,24 +1101,6 @@
                 };
             }, [isPlaying]);
 
-            // iOS Audio Session — keep audio session alive for background playback
-            useEffect(() => {
-                const audio = audioRef.current;
-                if (!audio) return;
-
-                // iOS'ta background playback için audio session'ı canlı tut
-                const handleVisibility = () => {
-                    if (document.visibilityState === 'hidden' && isPlaying) {
-                        // Background'a geçerken sesin devam etmesi için
-                        // iOS'ta audio context'i canlı tutmak gerekir
-                        audio.play().catch(() => {});
-                    }
-                };
-
-                document.addEventListener('visibilitychange', handleVisibility);
-                return () => document.removeEventListener('visibilitychange', handleVisibility);
-            }, [isPlaying]);
-
             // Handle playbackRate changes instantly — also re-apply after loadedmetadata
             // because some browsers reset playbackRate to 1 when src changes
             useEffect(() => {
