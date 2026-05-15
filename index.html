@@ -1410,21 +1410,18 @@
             // Audio Controls
             const playAyah = (ayah, options = {}) => {
                 const audio = audioRef.current;
+                const currentAyahId = audio.__activeAyah?.number;
+                const isSameAyah = currentAyahId === ayah.number;
 
-                if (activeAyah?.number === ayah.number && !options.forcePlay) {
-                    // Only toggle play/pause if THIS ayah's audio is actually loaded
-                    // audio.__activeAyah tracks what's currently in the audio element
-                    if (audio.__activeAyah?.number === ayah.number) {
-                        // Use React state instead of audio.paused for iOS PWA reliability
-                        if (!isPlaying) {
-                            audio.play().then(() => setIsPlaying(true)).catch(console.error);
-                        } else {
-                            audio.pause();
-                            setIsPlaying(false);
-                        }
-                        return;
+                if (isSameAyah && !options.forcePlay) {
+                    // Use audio.paused for synchronous reliability instead of stale isPlaying state
+                    if (audio.paused) {
+                        audio.play().then(() => setIsPlaying(true)).catch(console.error);
+                    } else {
+                        audio.pause();
+                        setIsPlaying(false);
                     }
-                    // Audio element has a different (or no) src — fall through to load+play
+                    return;
                 }
 
                 if (!options.onlyAudio) {
@@ -2359,7 +2356,7 @@
                             <button onClick={playPrev} aria-label="Önceki ayet" className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300 hover:text-emerald-600 flex items-center justify-center"><i className="fa-solid fa-backward-step text-xs"></i></button>
                             <button onClick={() => {
                                 const audio = audioRef.current;
-                                if (isPlaying) {
+                                if (!audio.paused) {
                                     audio.pause();
                                     setIsPlaying(false);
                                 } else {
