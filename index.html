@@ -307,7 +307,7 @@
     <!-- QURAN APP CONTAINER (React Mount)          -->
     <!-- ========================================== -->
     <div id="quran-root"
-        class="hidden fixed inset-0 z-[200] bg-gray-50 dark:bg-black w-full h-full overflow-hidden flex flex-col">
+        class="hidden fixed inset-0 z-[200] bg-gray-50 dark:bg-black w-full h-full overflow-hidden flex flex-col transition-colors duration-300">
     </div>
 
     <!-- ========================================== -->
@@ -2001,7 +2001,7 @@
             }
 
             return (
-                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-200 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-black border-slate-200 dark:border-neutral-800'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
+                <div id={`ayah-${ayahData.number}`} className={`rounded-xl shadow-sm border mb-6 overflow-hidden transition-all duration-300 ${isActive ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-400/50' : 'bg-white dark:bg-black border-slate-200 dark:border-neutral-800'} ${isSelected ? 'ring-2 ring-emerald-500 bg-emerald-50/30' : ''}`}>
                     <div className="bg-slate-50 dark:bg-black dark:border-b dark:border-neutral-800 px-4 py-2 border-b border-slate-100 flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <button onClick={toggleSelect} aria-label={isSelected ? 'Ayeti seçimden kaldır' : 'Ayeti seç'} aria-pressed={isSelected} className={`w-5 h-5 rounded border flex items-center justify-center transition-colors shadow-sm ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 hover:border-emerald-400'}`}>
@@ -2459,7 +2459,7 @@
             );
 
             return (
-                <main className={`flex-1 overflow-y-auto bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-4 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
+                <main className={`flex-1 overflow-y-auto bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-4 md:pt-8' : 'pt-4 md:pt-8'} transition-colors duration-300`} id="main-scroll">
                     <div className="max-w-4xl mx-auto pb-32">
                         {/* Minimal loading indicator - just top spinner, no blocking overlay */}
                         {loading && (
@@ -2610,7 +2610,7 @@
 
                         {/* Playlist List Mode */}
                         {!loading && viewMode === 'playlists_list' && (
-                            <div className="fade-in">
+                            <div className="fade-in transition-colors duration-300">
                                 <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
                                     <h2 className="text-2xl font-bold flex items-center gap-2 dark:text-slate-100"><i className="fa-solid fa-layer-group text-emerald-600"></i> Listelerim</h2>
                                     <div className="flex gap-2 flex-wrap">
@@ -2819,7 +2819,7 @@
 
 
             return (
-                <div className="fade-in">
+                <div className="fade-in transition-colors duration-300">
                     {/* Header Section - Professional UI Pattern */}
                     <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
                         <div>
