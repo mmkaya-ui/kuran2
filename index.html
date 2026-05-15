@@ -2628,14 +2628,16 @@
 
         // My Notes View Component - Professional UX with AyahCard
         const MyNotesView = () => {
-            const { showToast, surahs, fetchSurah, setViewMode } = useQuran();
+            const { showToast, surahs, fetchSurah, setViewMode, viewMode } = useQuran();
             const [notes, setNotes] = React.useState([]);
             const [loadingNotes, setLoadingNotes] = React.useState(true);
             const [ayahDetails, setAyahDetails] = React.useState({});
+            const [reloadTrigger, setReloadTrigger] = React.useState(0);
 
             // Load notes and fetch ayah details
             React.useEffect(() => {
-                console.log('[DEBUG MyNotesView] surahs:', surahs.length, 'localStorage:', localStorage.length);
+                console.log('[DEBUG MyNotesView] RELOADING - viewMode:', viewMode, 'localStorage:', localStorage.length);
+                setLoadingNotes(true);
                 
                 const loadNotesWithAyahs = async () => {
                     const loadedNotes = [];
@@ -2646,9 +2648,8 @@
                         
                         if (key && key.startsWith('quran_note_')) {
                             noteCount++;
-                            // Use DIRECT localStorage - safeStorage may have issues
                             const noteData = localStorage.getItem(key);
-                            console.log('[DEBUG] Found note:', key, 'data length:', noteData ? noteData.length : 0);
+                            console.log('[DEBUG] Loading note:', key, 'length:', noteData ? noteData.length : 0);
                             const match = key.match(/quran_note_(\d+)_(\d+)/);
                             if (match) {
                                 const surahNum = parseInt(match[1]);
@@ -2669,56 +2670,42 @@
                             }
                         }
                     }
-                    // Sort by surah number, then by ayah number
+                    
+                    console.log('[DEBUG MyNotesView] Found', noteCount, 'notes, loaded', loadedNotes.length);
                     loadedNotes.sort((a, b) => {
                         if (a.surahNum !== b.surahNum) return a.surahNum - b.surahNum;
                         return a.ayahNum - b.ayahNum;
                     });
-                    console.log('[DEBUG MyNotesView] Total notes loaded:', loadedNotes.length);
                     setNotes(loadedNotes);
 
-                    // BATCH FETCH: Load ayah details in parallel for better performance
-                    const BATCH_SIZE = 5; // Fetch 5 ayahs at a time to avoid rate limits
+                    // Fetch ayah details
                     const details = {};
-
-                    for (let i = 0; i < loadedNotes.length; i += BATCH_SIZE) {
-                        const batch = loadedNotes.slice(i, i + BATCH_SIZE);
-                        const batchPromises = batch.map(async (note) => {
-                            try {
-                                const response = await fetch(`${API_BASE}/ayah/${note.number}/editions/${EDITIONS.arabic},${EDITIONS.tr_diyanet},${EDITIONS.transliteration}`);
-                                const data = await response.json();
-                                if (data.code === 200 && data.data) {
-                                    const [arabic, turkish, transliteration] = data.data;
-                                    return {
-                                        number: note.number,
-                                        numberInSurah: note.ayahNum,
-                                        surahName: note.surahName,
-                                        surahNumber: note.surahNum,
-                                        text: arabic.text,
-                                        diyanet: turkish.text,
-                                        transliteration: transliteration.text,
-                                        audio: `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${note.number}.mp3`
-                                    };
-                                }
-                            } catch (e) { console.warn('Failed to fetch ayah:', note.number); }
-                            return null;
-                        });
-
-                        const batchResults = await Promise.all(batchPromises);
-                        batchResults.forEach((result) => {
-                            if (result) details[result.number] = result;
-                        });
-
-                        // Update UI progressively as batches load
-                        setAyahDetails({ ...details });
+                    for (const note of loadedNotes) {
+                        try {
+                            const response = await fetch(`${API_BASE}/ayah/${note.number}/editions/${EDITIONS.arabic},${EDITIONS.tr_diyanet},${EDITIONS.transliteration}`);
+                            const data = await response.json();
+                            if (data.code === 200 && data.data) {
+                                const [arabic, turkish, transliteration] = data.data;
+                                details[note.number] = {
+                                    number: note.number,
+                                    numberInSurah: note.ayahNum,
+                                    surahName: note.surahName,
+                                    surahNumber: note.surahNum,
+                                    text: arabic.text,
+                                    diyanet: turkish.text,
+                                    transliteration: transliteration.text,
+                                    audio: `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${note.number}.mp3`
+                                };
+                                setAyahDetails({ ...details });
+                            }
+                        } catch (e) { console.warn('Failed to fetch ayah:', note.number); }
                     }
 
                     setLoadingNotes(false);
                 };
-                // Always try to load notes, even if surahs not fully loaded
-                // This allows notes to be found and displayed
+                
                 loadNotesWithAyahs();
-            }, []); // Run once on mount
+            }, [viewMode, reloadTrigger]); // Reload when viewMode changes or manually triggered
 
             const deleteNote = (key) => {
                 localStorage.removeItem(key);
