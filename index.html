@@ -381,15 +381,54 @@
                     window.toggleQuranView(true);
                 });
 
-                // Initial routing check
-                if (window.location.hash.startsWith('#quran')) {
-                    setTimeout(() => window.toggleQuranView(true, true), 100);
+                // Parse hash and navigate to appropriate view
+                const parseQuranHash = () => {
+                    const hash = window.location.hash;
+                    if (!hash.startsWith('#quran')) return null;
+                    
+                    const path = hash.replace('#quran/', '');
+                    if (path === 'notes') return { view: 'my_notes' };
+                    if (path === 'playlists') return { view: 'playlists_list' };
+                    
+                    const parts = path.split('/');
+                    const surahNum = parseInt(parts[0]);
+                    const ayahNum = parts[1] ? parseInt(parts[1]) : null;
+                    if (surahNum >= 1 && surahNum <= 114) {
+                        return { view: 'reader', surahNumber: surahNum, ayahNumber: ayahNum };
+                    }
+                    return { view: 'reader' };
+                };
+
+                // Initial routing check with hash parsing
+                const initialRoute = parseQuranHash();
+                if (initialRoute) {
+                    setTimeout(() => {
+                        window.toggleQuranView(true, true);
+                        // Wait for React to mount then dispatch navigation
+                        setTimeout(() => {
+                            if (window.dispatchQuranNavigation) {
+                                window.dispatchQuranNavigation({ quran: true, ...initialRoute });
+                            } else {
+                                // Store for later when React mounts
+                                window.__pendingQuranRoute = initialRoute;
+                            }
+                        }, 200);
+                    }, 100);
                 }
 
-                // hashchange: sadece popstate tarafından yönetilmeyen durumlarda (ör. kullanıcı URL bar'ı doğrudan değiştirince)
-                // popstate zaten tetikleniyorsa çift çalışmayı önlemek için flag kullanıyoruz
+                // hashchange: sadece popstate tarafından yönetilmeyen durumlarda
                 let _popstateJustFired = false;
-                window.addEventListener('popstate', () => { _popstateJustFired = true; setTimeout(() => { _popstateJustFired = false; }, 50); }, { capture: true });
+                window.addEventListener('popstate', (e) => { 
+                    _popstateJustFired = true; 
+                    setTimeout(() => { _popstateJustFired = false; }, 50);
+                    // Handle back/forward buttons with hash
+                    const route = parseQuranHash();
+                    if (route && window.dispatchQuranNavigation) {
+                        window.dispatchQuranNavigation({ quran: true, ...route });
+                    } else if (!route) {
+                        window.toggleQuranView(false, true);
+                    }
+                }, { capture: true });
                 window.addEventListener('hashchange', () => {
                     if (_popstateJustFired) return;
                     if (window.location.hash.startsWith('#quran')) {
@@ -403,25 +442,9 @@
                         window.toggleQuranView(true, true);
                         
                         // Handle special views: notes, playlists
-                        if (path === 'notes' && window.dispatchQuranNavigation) {
-                            window.dispatchQuranNavigation({
-                                quran: true,
-                                view: 'my_notes'
-                            });
-                        } else if (path === 'playlists' && window.dispatchQuranNavigation) {
-                            window.dispatchQuranNavigation({
-                                quran: true,
-                                view: 'playlists_list'
-                            });
-                        }
-                        // If we have surah number, dispatch immediately for faster navigation
-                        else if (surahNum >= 1 && surahNum <= 114 && window.dispatchQuranNavigation) {
-                            window.dispatchQuranNavigation({
-                                quran: true,
-                                view: 'reader',
-                                surahNumber: surahNum,
-                                ayahNumber: ayahNum
-                            });
+                        const route = parseQuranHash();
+                        if (route && window.dispatchQuranNavigation) {
+                            window.dispatchQuranNavigation({ quran: true, ...route });
                         }
                     } else {
                         window.toggleQuranView(false, true);
@@ -1235,7 +1258,30 @@
                     .then(data => {
                         setSurahs(data.data);
 
-                        // RESTORE STATE: Hash'ten sure (refresh)
+                        // RESTORE STATE: Hash'ten route (notes, playlists, reader)
+                        if (window.__pendingQuranRoute) {
+                            const route = window.__pendingQuranRoute;
+                            window.__pendingQuranRoute = null;
+                            
+                            if (route.view === 'my_notes') {
+                                setViewMode('my_notes');
+                                setLoading(false);
+                                return;
+                            } else if (route.view === 'playlists_list') {
+                                setViewMode('playlists_list');
+                                setLoading(false);
+                                return;
+                            } else if (route.view === 'reader' && route.surahNumber) {
+                                const targetSurah = data.data.find(s => s.number === route.surahNumber);
+                                if (targetSurah) {
+                                    if (route.ayahNumber) jumpTargetRef.current = { ayahNumber: route.ayahNumber, shouldPlay: false };
+                                    fetchSurah(targetSurah);
+                                    return;
+                                }
+                            }
+                        }
+                        
+                        // RESTORE STATE: Legacy hash'ten sure (backward compat)
                         if (window.__pendingQuranSurah) {
                             const surahNum = window.__pendingQuranSurah;
                             const ayahNum = window.__pendingQuranAyah || null;
