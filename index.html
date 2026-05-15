@@ -2369,22 +2369,25 @@
                         {/* Mobile Surah Select - Sticky at top */}
                         {!loading && !searching && viewMode === 'reader' && (
                             <div className="md:hidden sticky top-0 left-0 w-full z-10 bg-white dark:bg-black border-b border-gray-200 dark:border-neutral-800 pt-0 px-2 pb-2 shadow-sm flex gap-2 mb-4">
-                                <select
-                                    onChange={(e) => {
-                                        const num = parseInt(e.target.value);
-                                        if (isNaN(num)) return;
-                                        const surah = surahs.find(s => s.number === num);
-                                        if (surah) fetchSurah(surah);
-                                    }}
-                                    className="flex-1 p-1 rounded border border-gray-200 dark:border-neutral-800 bg-white dark:bg-black dark:text-white focus:ring-emerald-500 text-sm appearance-none"
-                                    value={activeSurah?.number || 1}
-                                >
-                                    {sortedSurahs.map(s => (
-                                        <option key={s.number} value={s.number}>
-                                            {s.number}. {getSurahNameTR(s.number)} — {getSurahNameAR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="flex-1 relative">
+                                    <select
+                                        onChange={(e) => {
+                                            const num = parseInt(e.target.value);
+                                            if (isNaN(num)) return;
+                                            const surah = surahs.find(s => s.number === num);
+                                            if (surah) fetchSurah(surah);
+                                        }}
+                                        className="w-full p-1 pr-8 rounded border border-gray-200 dark:border-neutral-800 bg-white dark:bg-black dark:text-white focus:ring-emerald-500 text-sm appearance-none"
+                                        value={activeSurah?.number || 1}
+                                    >
+                                        {sortedSurahs.map(s => (
+                                            <option key={s.number} value={s.number}>
+                                                {s.number}. {getSurahNameTR(s.number)} — {getSurahNameAR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <i className="fa-solid fa-chevron-down absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-slate-500 text-xs pointer-events-none"></i>
+                                </div>
 
                                 <button
                                     onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')}
