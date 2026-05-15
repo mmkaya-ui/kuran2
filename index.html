@@ -393,7 +393,23 @@
                 window.addEventListener('hashchange', () => {
                     if (_popstateJustFired) return;
                     if (window.location.hash.startsWith('#quran')) {
+                        // Parse hash for direct navigation (faster than delayed processing)
+                        const hash = window.location.hash;
+                        const parts = hash.replace('#quran/', '').split('/');
+                        const surahNum = parseInt(parts[0]);
+                        const ayahNum = parts[1] ? parseInt(parts[1]) : null;
+                        
                         window.toggleQuranView(true, true);
+                        
+                        // If we have surah number, dispatch immediately for faster navigation
+                        if (surahNum >= 1 && surahNum <= 114 && window.dispatchQuranNavigation) {
+                            window.dispatchQuranNavigation({
+                                quran: true,
+                                view: 'reader',
+                                surahNumber: surahNum,
+                                ayahNumber: ayahNum
+                            });
+                        }
                     } else {
                         window.toggleQuranView(false, true);
                     }
@@ -1664,7 +1680,7 @@
                 setViewMode(view);
             };
 
-            // Global Navigation Handler (for PopState)
+            // Global Navigation Handler (for PopState and Hash Changes)
             useEffect(() => {
                 window.dispatchQuranNavigation = (state) => {
                     if (!state) return;
@@ -1675,10 +1691,29 @@
                         // Restore detailed state if passed
                         if (state.view === 'reader' && state.surahNumber) {
                             if (activeSurah?.number !== state.surahNumber) {
-                                // We need to re-fetch if not already active. 
-                                // Since we don't have the full object here easily, maybe just find it?
+                                // We need to re-fetch if not already active
                                 const s = surahs.find(x => x.number === state.surahNumber);
-                                if (s) fetchSurah(s);
+                                if (s) {
+                                    // Store ayah target for jump after load
+                                    if (state.ayahNumber) {
+                                        jumpTargetRef.current = { ayahNumber: state.ayahNumber, shouldPlay: false };
+                                    }
+                                    fetchSurah(s);
+                                } else if (!surahs.length) {
+                                    // Surahs not loaded yet, store for later
+                                    window.__pendingQuranSurah = state.surahNumber;
+                                    window.__pendingQuranAyah = state.ayahNumber;
+                                }
+                            } else if (state.ayahNumber && activeSurah) {
+                                // Already on correct surah, just jump to ayah
+                                jumpTargetRef.current = { ayahNumber: state.ayahNumber, shouldPlay: false };
+                                // Trigger scroll to ayah
+                                const ayahEl = document.getElementById(`ayah-${state.ayahNumber}`);
+                                if (ayahEl) {
+                                    ayahEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    ayahEl.classList.add('ring-2', 'ring-amber-400');
+                                    setTimeout(() => ayahEl.classList.remove('ring-2', 'ring-amber-400'), 2000);
+                                }
                             }
                         }
                         if (state.view === 'search' && state.query) {
@@ -1691,7 +1726,7 @@
                 };
 
                 return () => { window.dispatchQuranNavigation = null; };
-            }, [surahs, activeSurah, searchQuery, fetchSurah, handleSearch]); // Deps ensuring we have latest data
+            }, [surahs, activeSurah, searchQuery, fetchSurah, handleSearch]);
 
             const sortedSurahs = useMemo(() => {
                 return [...surahs].sort((a, b) => {
@@ -1801,7 +1836,8 @@
 
             const handleShare = async () => {
                 const deepLink = `${window.location.origin}${window.location.pathname}#quran/${ayahData.surahNumber}/${ayahData.numberInSurah}`;
-                const shareText = `"${ayahData.diyanet}"\n\n— ${ayahData.surahName} Suresi, ${ayahData.numberInSurah}. Ayet\n\n${deepLink}`;
+                // Don't include deepLink in text - navigator.share adds url separately causing duplicates
+                const shareText = `"${ayahData.diyanet}"\n\n— ${ayahData.surahName} Suresi, ${ayahData.numberInSurah}. Ayet`;
                 if (navigator.share) {
                     try {
                         await navigator.share({
@@ -1811,8 +1847,9 @@
                         });
                     } catch (err) { }
                 } else {
+                    // Fallback: include link in clipboard text
                     try {
-                        await navigator.clipboard.writeText(shareText);
+                        await navigator.clipboard.writeText(`${shareText}\n\n${deepLink}`);
                         showToast("Ayet metni kopyalandı!");
                     } catch {
                         showToast("Kopyalama başarısız oldu.");
