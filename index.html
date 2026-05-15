@@ -62,6 +62,8 @@
         html {
             background-color: #047857;
             scroll-behavior: smooth;
+            /* Prevent pull-to-refresh on iOS PWA */
+            overscroll-behavior-y: none;
         }
 
         body {
@@ -1060,10 +1062,14 @@
             }, []);
 
             // Screen Wake Lock — prevent screen from sleeping during playback
-            // Supported: Android Chrome, Samsung Internet. iOS Safari: no WakeLock API, no workaround needed
-            // (iOS keeps screen on during active audio in PWA mode natively)
+            // Supported: Android Chrome, Samsung Internet.
+            // iOS: WakeLock API yok, ama audio çalarken veya "noSleep" tekniğiyle ekran açık kalır
             useEffect(() => {
-                if (!('wakeLock' in navigator)) return;
+                if (!('wakeLock' in navigator)) {
+                    // iOS fallback: audio element'in canlı tutulması ekran kilidini geciktirir
+                    // PWA'da audio çalarken iOS native olarak ekranı açık tutar
+                    return;
+                }
                 let wakeLockSentinel = null;
 
                 const acquire = async () => {
@@ -1080,23 +1086,40 @@
                 };
 
                 // Re-acquire after tab becomes visible again (browser releases lock on hide)
-                const onVisibilityChange = () => {
-                    if (document.visibilityState === 'visible' && isPlaying) acquire();
+                const handleVisibility = () => {
+                    if (document.visibilityState === 'visible' && isPlaying) {
+                        acquire();
+                    }
                 };
 
-                if (isPlaying) {
-                    acquire();
-                    document.addEventListener('visibilitychange', onVisibilityChange);
-                } else {
-                    release();
-                }
+                if (isPlaying) acquire();
+                else release();
 
+                document.addEventListener('visibilitychange', handleVisibility);
                 return () => {
                     release();
-                    document.removeEventListener('visibilitychange', onVisibilityChange);
+                    document.removeEventListener('visibilitychange', handleVisibility);
                 };
             }, [isPlaying]);
-            
+
+            // iOS Audio Session — keep audio session alive for background playback
+            useEffect(() => {
+                const audio = audioRef.current;
+                if (!audio) return;
+
+                // iOS'ta background playback için audio session'ı canlı tut
+                const handleVisibility = () => {
+                    if (document.visibilityState === 'hidden' && isPlaying) {
+                        // Background'a geçerken sesin devam etmesi için
+                        // iOS'ta audio context'i canlı tutmak gerekir
+                        audio.play().catch(() => {});
+                    }
+                };
+
+                document.addEventListener('visibilitychange', handleVisibility);
+                return () => document.removeEventListener('visibilitychange', handleVisibility);
+            }, [isPlaying]);
+
             // Handle playbackRate changes instantly — also re-apply after loadedmetadata
             // because some browsers reset playbackRate to 1 when src changes
             useEffect(() => {
