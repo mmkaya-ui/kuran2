@@ -1760,8 +1760,22 @@
             const saveNote = (val) => {
                 setLocalNote(val);
                 const noteKey = `quran_note_${ayahData.surahNumber}_${ayahData.numberInSurah}`;
-                if (val.trim()) safeStorage.setItem(noteKey, val);
-                else safeStorage.removeItem(noteKey);
+                console.log('[DEBUG] Saving note:', noteKey, 'value:', val.substring(0, 50) + '...');
+                if (val.trim()) {
+                    const result = safeStorage.setItem(noteKey, val);
+                    console.log('[DEBUG] Save result:', result);
+                    if (!result) {
+                        console.error('[DEBUG] Failed to save note - trying direct localStorage');
+                        try {
+                            localStorage.setItem(noteKey, val);
+                            console.log('[DEBUG] Direct localStorage success');
+                        } catch (e) {
+                            console.error('[DEBUG] Direct localStorage also failed:', e);
+                        }
+                    }
+                } else {
+                    safeStorage.removeItem(noteKey);
+                }
             };
 
             useEffect(() => {
@@ -2193,7 +2207,7 @@
             const { sortedSurahs, activeSurah, fetchSurah, sortType, setSortType } = useQuran();
 
             return (
-                <div className="h-full overflow-y-auto ios-scroll bg-slate-50 border-r border-slate-200 dark:bg-black dark:border-neutral-800 w-full md:w-64 flex-shrink-0 hidden md:block">
+                <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-black dark:border-neutral-800 w-full md:w-64 flex-shrink-0 hidden md:block">
                     <div className="p-4 border-b border-slate-200 dark:border-neutral-800 bg-white dark:bg-black sticky top-0 z-10 flex justify-between items-center">
                         <h2 className="font-bold text-slate-700 dark:text-slate-200"><i className="fa-solid fa-book-open text-emerald-600 mr-2"></i> Sureler</h2>
                         <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} aria-label={sortType === 'mushaf' ? 'İniş sırasına göre sırala' : 'Mushaf sırasına göre sırala'} className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-200 px-2 py-1 rounded hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1">
@@ -2348,7 +2362,7 @@
             );
 
             return (
-                <main className={`flex-1 overflow-y-auto ios-scroll bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-4 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
+                <main className={`flex-1 overflow-y-auto bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-4 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
                     <div className="max-w-4xl mx-auto pb-32">
                         {loading && <div className="flex flex-col items-center justify-center h-64 text-emerald-600 animate-pulse"><i className="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p>{loadingText}</p></div>}
 
