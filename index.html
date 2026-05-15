@@ -2343,7 +2343,7 @@
                                 >
                                     {sortedSurahsMobile.map(s => (
                                         <option key={s.number} value={s.number}>
-                                            {s.number}. {getSurahNameTR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
+                                            {s.number}. {getSurahNameTR(s.number)} — {getSurahNameAR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
                                         </option>
                                     ))}
                                 </select>
