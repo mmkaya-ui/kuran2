@@ -92,6 +92,12 @@
             border-radius: 10px;
         }
 
+        /* iOS smooth scrolling fix */
+        .ios-scroll {
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: auto;
+        }
+
         .rotate-icon {
             transform: rotate(180deg);
         }
@@ -2153,7 +2159,7 @@
             const { sortedSurahs, activeSurah, fetchSurah, sortType, setSortType } = useQuran();
 
             return (
-                <div className="h-full overflow-y-auto bg-slate-50 border-r border-slate-200 dark:bg-black dark:border-neutral-800 w-full md:w-64 flex-shrink-0 hidden md:block">
+                <div className="h-full overflow-y-auto ios-scroll bg-slate-50 border-r border-slate-200 dark:bg-black dark:border-neutral-800 w-full md:w-64 flex-shrink-0 hidden md:block">
                     <div className="p-4 border-b border-slate-200 dark:border-neutral-800 bg-white dark:bg-black sticky top-0 z-10 flex justify-between items-center">
                         <h2 className="font-bold text-slate-700 dark:text-slate-200"><i className="fa-solid fa-book-open text-emerald-600 mr-2"></i> Sureler</h2>
                         <button onClick={() => setSortType(prev => prev === 'mushaf' ? 'revelation' : 'mushaf')} aria-label={sortType === 'mushaf' ? 'İniş sırasına göre sırala' : 'Mushaf sırasına göre sırala'} className="text-xs bg-slate-100 dark:bg-gray-700 text-slate-600 dark:text-slate-200 px-2 py-1 rounded hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center gap-1">
@@ -2186,7 +2192,7 @@
                 viewMode, setViewMode, activeSurah, ayahs,
                 searching, searchQuery, handleSearch, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
-                selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType,
+                selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType, sortedSurahs,
                 activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast
             } = useQuran();
 
@@ -2221,8 +2227,6 @@
                     }
                 }
             }, [activeAyah, displayLimit, ayahs, viewMode]);
-
-            const { sortedSurahs: sortedSurahsMobile } = useQuran();
 
             // Infinite Scroll Logic — skip reset when a jump just set displayLimit
             useEffect(() => {
@@ -2310,7 +2314,7 @@
             );
 
             return (
-                <main className={`flex-1 overflow-y-auto bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-16 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
+                <main className={`flex-1 overflow-y-auto ios-scroll bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-16 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
                     <div className="max-w-4xl mx-auto pb-32">
                         {loading && <div className="flex flex-col items-center justify-center h-64 text-emerald-600 animate-pulse"><i className="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p>{loadingText}</p></div>}
 
@@ -2341,7 +2345,7 @@
                                     className="flex-1 p-2 rounded border border-gray-200 dark:border-neutral-800 dark:bg-black dark:text-white focus:ring-emerald-500 text-sm"
                                     value={activeSurah?.number || 1}
                                 >
-                                    {sortedSurahsMobile.map(s => (
+                                    {sortedSurahs.map(s => (
                                         <option key={s.number} value={s.number}>
                                             {s.number}. {getSurahNameTR(s.number)} — {getSurahNameAR(s.number)} {sortType === 'revelation' ? `(İniş: ${REVELATION_ORDER_MAP[s.number]})` : ''}
                                         </option>
