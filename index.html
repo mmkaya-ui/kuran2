@@ -2654,20 +2654,20 @@
                             </div>
                             {/* Navigation Tabs */}
                             <div className="flex gap-1 mt-2 mb-1">
-                                <button 
-                                    onClick={() => setViewMode('reader')} 
-                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'reader' || viewMode === 'search' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
+                                <button
+                                    onClick={() => setViewMode('reader')}
+                                    className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'reader' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
                                     <i className="fa-solid fa-book-open text-[10px]"></i> Kur'an
                                 </button>
-                                <button 
-                                    onClick={() => { if (searchQuery) { handleSearch(searchQuery); } setViewMode('search'); }} 
+                                <button
+                                    onClick={() => { if (searchQuery) { handleSearch(searchQuery); } setViewMode('search'); }}
                                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'search' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
                                     <i className="fa-solid fa-magnifying-glass text-[10px]"></i> Arama
                                 </button>
-                                <button 
-                                    onClick={() => setViewMode('playlists_list')} 
+                                <button
+                                    onClick={() => setViewMode('playlists_list')}
                                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'playlists_list' || viewMode === 'playlist_view' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
                                     <i className="fa-solid fa-layer-group text-[10px]"></i> Listelerim
