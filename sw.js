@@ -61,6 +61,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
 
+    // iOS Safari uses Range requests for audio/video. Do not intercept, let browser handle streaming.
+    if (event.request.headers.has('range')) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
     // 1. API Requests (api.alquran.cloud)
     // Strategy: Network First, fallback to Cache (or Stale-While-Revalidate)
     if (url.origin === 'https://api.alquran.cloud') {
