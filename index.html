@@ -2016,7 +2016,7 @@
                                         : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-500'
                                 }`}
                             ><i className="fa-solid fa-bookmark text-xs"></i></button>
-                            <button onClick={() => setShowNotes(!showNotes)} aria-label={showNotes ? 'Notları gizle' : 'Not al'} aria-expanded={showNotes} className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${localNote ? 'bg-amber-100 text-amber-600' : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-amber-100 hover:text-amber-600'}`} title="Not Al"><i className={`fa-solid ${localNote ? 'fa-note-sticky' : 'fa-pen-to-square'} text-xs`}></i></button>
+                            <button onClick={() => setShowNotes(!showNotes)} aria-label={showNotes ? 'Notları gizle' : 'Not al'} aria-expanded={showNotes} className={`w-7 h-7 flex items-center justify-center rounded-full transition-colors ${localNote ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400' : 'bg-slate-200 text-slate-600 dark:bg-gray-700 dark:text-slate-300 hover:bg-blue-100 hover:text-blue-600'}`} title="Not Al"><i className={`fa-solid ${localNote ? 'fa-comment' : 'fa-pen-to-square'} text-xs`}></i></button>
                             {viewMode === 'playlist_view' ? (
                                 <button onClick={removeFromPlaylist} aria-label="Listeden kaldır" className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 text-red-600 hover:bg-red-200"><i className="fa-solid fa-trash text-xs"></i></button>
                             ) : (
@@ -2807,7 +2807,7 @@
                     <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
                         <div>
                             <h2 className="text-2xl font-bold flex items-center gap-2 dark:text-slate-100">
-                                <i className="fa-solid fa-note-sticky text-emerald-600"></i> Notlarım
+                                <i className="fa-solid fa-comment text-emerald-600"></i> Notlarım
                             </h2>
                             <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{notes.length} not kaydedildi</p>
                         </div>
@@ -2825,7 +2825,7 @@
                     {/* Empty State */}
                     {notes.length === 0 && (
                         <div className="text-center py-16 bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-neutral-800">
-                            <i className="fa-solid fa-note-sticky text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                            <i className="fa-solid fa-comment text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
                             <p className="text-gray-500 dark:text-slate-400">Henüz not oluşturmadınız.</p>
                             <p className="text-sm text-gray-400 dark:text-slate-500 mt-2">Ayet kartlarındaki <i className="fa-solid fa-pen-to-square text-xs"></i> butonu ile not ekleyin.</p>
                         </div>
@@ -3006,7 +3006,7 @@
                                     </section>
 
                                     <section>
-                                        <h3 className="font-bold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2"><i className="fa-solid fa-note-sticky text-xs"></i> Notlar</h3>
+                                        <h3 className="font-bold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-2"><i className="fa-solid fa-comment text-xs"></i> Notlar</h3>
                                         <ul className="space-y-1.5 pl-2">
                                             <li>Her ayetin <i className="fa-solid fa-pen-to-square text-xs"></i> butonuyla not al, tarayıcında saklanır</li>
                                             <li>Header'daki <span className="font-semibold">Notlar</span> butonu ile tüm notlarını yedekle ve başka cihaza taşı</li>
@@ -3085,7 +3085,7 @@
                                     onClick={() => setViewMode('my_notes')}
                                     className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1 ${viewMode === 'my_notes' ? 'bg-white text-emerald-800 shadow-sm' : 'text-emerald-100 hover:bg-emerald-600'}`}
                                 >
-                                    <i className="fa-solid fa-note-sticky text-[10px]"></i> Notlarım
+                                    <i className="fa-solid fa-comment text-[10px]"></i> Notlarım
                                 </button>
                                 <button
                                     onClick={() => setViewMode('playlists_list')}
