@@ -2636,12 +2636,14 @@
 
             // Load notes and fetch ayah details
             React.useEffect(() => {
-                console.log('[DEBUG MyNotesView] RELOADING - viewMode:', viewMode, 'localStorage:', localStorage.length);
+                console.log('[DEBUG MyNotesView] RELOADING - viewMode:', viewMode, 'localStorage:', localStorage.length, 'surahs:', surahs.length);
                 setLoadingNotes(true);
                 
                 const loadNotesWithAyahs = async () => {
                     const loadedNotes = [];
                     let noteCount = 0;
+                    let skippedNoSurah = 0;
+                    let skippedNoAyah = 0;
                     
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
@@ -2649,29 +2651,42 @@
                         if (key && key.startsWith('quran_note_')) {
                             noteCount++;
                             const noteData = localStorage.getItem(key);
-                            console.log('[DEBUG] Loading note:', key, 'length:', noteData ? noteData.length : 0);
+                            console.log('[DEBUG] Processing note key:', key);
                             const match = key.match(/quran_note_(\d+)_(\d+)/);
                             if (match) {
                                 const surahNum = parseInt(match[1]);
                                 const ayahNum = parseInt(match[2]);
+                                console.log('[DEBUG] Parsed surah:', surahNum, 'ayah:', ayahNum);
+                                
                                 const surah = surahs.find(s => s.number === surahNum);
-                                const globalAyah = surahs.find(s => s.number === surahNum)?.ayahs?.find(a => a.numberInSurah === ayahNum);
-                                if (globalAyah) {
-                                    loadedNotes.push({
-                                        key,
-                                        surahNum,
-                                        ayahNum,
-                                        surahName: surah ? getSurahNameTR(surahNum) : `Sure ${surahNum}`,
-                                        note: noteData,
-                                        number: globalAyah.number,
-                                        globalAyah
-                                    });
+                                if (!surah) {
+                                    console.log('[DEBUG] SKIPPED: Surah not found for', surahNum);
+                                    skippedNoSurah++;
+                                    continue;
                                 }
+                                
+                                const globalAyah = surah.ayahs?.find(a => a.numberInSurah === ayahNum);
+                                if (!globalAyah) {
+                                    console.log('[DEBUG] SKIPPED: Ayah not found in surah', surahNum, 'for ayahNum', ayahNum);
+                                    skippedNoAyah++;
+                                    continue;
+                                }
+                                
+                                console.log('[DEBUG] ADDED note for', surahNum, ':', ayahNum);
+                                loadedNotes.push({
+                                    key,
+                                    surahNum,
+                                    ayahNum,
+                                    surahName: getSurahNameTR(surahNum),
+                                    note: noteData,
+                                    number: globalAyah.number,
+                                    globalAyah
+                                });
                             }
                         }
                     }
                     
-                    console.log('[DEBUG MyNotesView] Found', noteCount, 'notes, loaded', loadedNotes.length);
+                    console.log('[DEBUG MyNotesView] Total keys:', noteCount, 'Added:', loadedNotes.length, 'NoSurah:', skippedNoSurah, 'NoAyah:', skippedNoAyah);
                     loadedNotes.sort((a, b) => {
                         if (a.surahNum !== b.surahNum) return a.surahNum - b.surahNum;
                         return a.ayahNum - b.ayahNum;
