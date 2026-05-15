@@ -1753,28 +1753,38 @@
 
             useEffect(() => {
                 const noteKey = `quran_note_${ayahData.surahNumber}_${ayahData.numberInSurah}`;
-                const saved = safeStorage.getItem(noteKey);
-                if (saved) setLocalNote(saved);
+                const saved = localStorage.getItem(noteKey);
+                if (saved) {
+                    setLocalNote(saved);
+                    console.log('[DEBUG AyahCard] Loaded note for', noteKey);
+                }
             }, [ayahData.surahNumber, ayahData.numberInSurah]);
 
             const saveNote = (val) => {
                 setLocalNote(val);
                 const noteKey = `quran_note_${ayahData.surahNumber}_${ayahData.numberInSurah}`;
-                console.log('[DEBUG] Saving note:', noteKey, 'value:', val.substring(0, 50) + '...');
+                console.log('[DEBUG] Saving note:', noteKey, 'length:', val.length);
+                
                 if (val.trim()) {
-                    const result = safeStorage.setItem(noteKey, val);
-                    console.log('[DEBUG] Save result:', result);
-                    if (!result) {
-                        console.error('[DEBUG] Failed to save note - trying direct localStorage');
-                        try {
-                            localStorage.setItem(noteKey, val);
-                            console.log('[DEBUG] Direct localStorage success');
-                        } catch (e) {
-                            console.error('[DEBUG] Direct localStorage also failed:', e);
+                    // ALWAYS use direct localStorage for notes - safeStorage may fail silently
+                    try {
+                        localStorage.setItem(noteKey, val);
+                        console.log('[DEBUG] Note saved successfully to localStorage');
+                        
+                        // Verify it was saved
+                        const verify = localStorage.getItem(noteKey);
+                        if (verify === val) {
+                            console.log('[DEBUG] Verified: Note is in localStorage');
+                        } else {
+                            console.error('[DEBUG] Verification failed! Saved:', val.length, 'Retrieved:', verify ? verify.length : 'null');
                         }
+                    } catch (e) {
+                        console.error('[DEBUG] localStorage save FAILED:', e.message);
+                        alert('Not kaydedilemedi: ' + e.message);
                     }
                 } else {
-                    safeStorage.removeItem(noteKey);
+                    localStorage.removeItem(noteKey);
+                    console.log('[DEBUG] Note removed (empty value)');
                 }
             };
 
@@ -2625,21 +2635,20 @@
 
             // Load notes and fetch ayah details
             React.useEffect(() => {
-                console.log('[DEBUG MyNotesView] surahs length:', surahs.length);
-                console.log('[DEBUG MyNotesView] localStorage length:', localStorage.length);
+                console.log('[DEBUG MyNotesView] surahs:', surahs.length, 'localStorage:', localStorage.length);
                 
                 const loadNotesWithAyahs = async () => {
                     const loadedNotes = [];
-                    console.log('[DEBUG MyNotesView] Starting to scan localStorage...');
+                    let noteCount = 0;
                     
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
-                        console.log('[DEBUG MyNotesView] Checking key:', key);
                         
                         if (key && key.startsWith('quran_note_')) {
-                            console.log('[DEBUG MyNotesView] Found note key:', key);
-                            const noteData = safeStorage.getItem(key);
-                            console.log('[DEBUG MyNotesView] Note data:', noteData ? 'EXISTS' : 'NULL');
+                            noteCount++;
+                            // Use DIRECT localStorage - safeStorage may have issues
+                            const noteData = localStorage.getItem(key);
+                            console.log('[DEBUG] Found note:', key, 'data length:', noteData ? noteData.length : 0);
                             const match = key.match(/quran_note_(\d+)_(\d+)/);
                             if (match) {
                                 const surahNum = parseInt(match[1]);
@@ -2706,16 +2715,13 @@
 
                     setLoadingNotes(false);
                 };
-                if (surahs.length > 0) {
-                    loadNotesWithAyahs();
-                } else {
-                    console.log('[DEBUG MyNotesView] Skipping load - surahs not ready');
-                    setLoadingNotes(false);
-                }
-            }, [surahs, showToast]);
+                // Always try to load notes, even if surahs not fully loaded
+                // This allows notes to be found and displayed
+                loadNotesWithAyahs();
+            }, []); // Run once on mount
 
             const deleteNote = (key) => {
-                safeStorage.removeItem(key);
+                localStorage.removeItem(key);
                 setNotes(prev => prev.filter(n => n.key !== key));
                 showToast('Not silindi.');
             };
@@ -2747,7 +2753,7 @@
                         let count = 0;
                         Object.entries(data).forEach(([k, v]) => {
                             if (k.startsWith('quran_note_')) {
-                                safeStorage.setItem(k, v);
+                                localStorage.setItem(k, v);
                                 count++;
                             }
                         });
