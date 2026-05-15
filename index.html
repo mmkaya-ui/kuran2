@@ -1295,18 +1295,20 @@
                             }
                         }
 
-                        // RESTORE STATE: Bookmark — sadece sureyi yükle
-                        const bRaw = safeStorage.getItem('quran_bookmark');
-                        if (bRaw) {
-                            let bParsed; try { bParsed = JSON.parse(bRaw); } catch(e) { safeStorage.removeItem('quran_bookmark'); }
-                            if (bParsed && bParsed.surahNumber) {
-                                const targetSurah = data.data.find(s => s.number === bParsed.surahNumber);
-                                if (targetSurah) { fetchSurah(targetSurah); return; }
+                        // RESTORE STATE: Bookmark — sadece sureyi yükle (ama URL route'u varsa onu kullan)
+                        if (!window.__pendingQuranRoute && !window.__pendingQuranSurah) {
+                            const bRaw = safeStorage.getItem('quran_bookmark');
+                            if (bRaw) {
+                                let bParsed; try { bParsed = JSON.parse(bRaw); } catch(e) { safeStorage.removeItem('quran_bookmark'); }
+                                if (bParsed && bParsed.surahNumber) {
+                                    const targetSurah = data.data.find(s => s.number === bParsed.surahNumber);
+                                    if (targetSurah) { fetchSurah(targetSurah); return; }
+                                }
                             }
                         }
 
-                        // Bookmark yoksa Fatiha'dan başla
-                        if (data.data && data.data.length > 0) {
+                        // Bookmark yoksa ve URL'den gelen route yoksa Fatiha'dan başla
+                        if (!window.__pendingQuranRoute && !window.__pendingQuranSurah && data.data && data.data.length > 0) {
                             fetchSurah(data.data[0]);
                         } else {
                             setLoading(false);
