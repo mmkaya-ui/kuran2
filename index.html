@@ -2913,10 +2913,27 @@
             };
 
 
+            const [noteSearchQuery, setNoteSearchQuery] = useState('');
+            
+            const filteredNotes = useMemo(() => {
+                if (!noteSearchQuery.trim()) return notes;
+                const query = noteSearchQuery.toLowerCase();
+                return notes.filter(note => {
+                    const ayahData = ayahDetails[note.key];
+                    return (
+                        note.noteText.toLowerCase().includes(query) ||
+                        note.surahName.toLowerCase().includes(query) ||
+                        String(note.ayahNum).includes(query) ||
+                        (ayahData?.text && ayahData.text.toLowerCase().includes(query)) ||
+                        (ayahData?.diyanet && ayahData.diyanet.toLowerCase().includes(query))
+                    );
+                });
+            }, [notes, noteSearchQuery, ayahDetails]);
+
             return (
                 <div className="fade-in transition-colors duration-300">
                     {/* Header Section - Professional UI Pattern */}
-                    <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
+                    <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
                         <div>
                             <h2 className="text-2xl font-bold flex items-center gap-2 dark:text-slate-100">
                                 <i className="fa-solid fa-comment text-emerald-600"></i> Notlarım
@@ -2934,6 +2951,33 @@
                         </div>
                     </div>
 
+                    {/* Search in Notes */}
+                    <div className="mb-4">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Notlarında ara..."
+                                value={noteSearchQuery}
+                                onChange={(e) => setNoteSearchQuery(e.target.value)}
+                                className="w-full p-2.5 pl-10 pr-8 rounded-lg text-sm bg-white dark:bg-black border border-gray-200 dark:border-neutral-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition-colors"
+                            />
+                            <i className="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                            {noteSearchQuery && (
+                                <button
+                                    onClick={() => setNoteSearchQuery('')}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500"
+                                >
+                                    <i className="fa-solid fa-xmark text-xs"></i>
+                                </button>
+                            )}
+                        </div>
+                        {noteSearchQuery && (
+                            <p className="text-xs text-gray-500 mt-1.5">
+                                {filteredNotes.length} sonuç bulundu
+                            </p>
+                        )}
+                    </div>
+
                     {/* Empty State */}
                     {notes.length === 0 && (
                         <div className="text-center py-16 bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-neutral-800">
@@ -2945,7 +2989,7 @@
 
                     {/* Notes List with Ayah Cards */}
                     <div className="space-y-6">
-                        {notes.map((note) => {
+                        {filteredNotes.map((note) => {
                             const ayahData = ayahDetails[note.key];
                             if (!ayahData) {
                                 // Old note without stored ayah data - show note only with uniform styling
@@ -3036,6 +3080,14 @@
                                 </div>
                             );
                         })}
+                        
+                        {/* No search results */}
+                        {filteredNotes.length === 0 && noteSearchQuery && (
+                            <div className="text-center py-8 bg-white dark:bg-black rounded-xl border border-gray-200 dark:border-neutral-800">
+                                <i className="fa-solid fa-magnifying-glass text-2xl text-gray-300 dark:text-gray-600 mb-2"></i>
+                                <p className="text-gray-500 dark:text-slate-400 text-sm">"{noteSearchQuery}" için sonuç bulunamadı</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             );
