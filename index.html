@@ -2368,7 +2368,7 @@
 
                         {/* Mobile Surah Select - Sticky at top */}
                         {!loading && !searching && viewMode === 'reader' && (
-                            <div className="md:hidden sticky top-0 left-0 w-full z-10 bg-white dark:bg-black border-b dark:border-neutral-800 shadow-sm flex gap-0">
+                            <div className="md:hidden sticky top-0 left-0 w-full z-10 bg-white dark:bg-black border-b dark:border-neutral-800 p-2 shadow-sm flex gap-2 mb-4">
                                 <select
                                     onChange={(e) => {
                                         const num = parseInt(e.target.value);
@@ -2376,7 +2376,7 @@
                                         const surah = surahs.find(s => s.number === num);
                                         if (surah) fetchSurah(surah);
                                     }}
-                                    className="flex-1 p-2 rounded border border-gray-200 dark:border-neutral-800 dark:bg-black dark:text-white focus:ring-emerald-500 text-sm"
+                                    className="flex-1 p-1 rounded border border-gray-200 dark:border-neutral-800 dark:bg-black dark:text-white focus:ring-emerald-500 text-sm"
                                     value={activeSurah?.number || 1}
                                 >
                                     {sortedSurahs.map(s => (
