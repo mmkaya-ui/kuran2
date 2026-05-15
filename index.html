@@ -847,6 +847,16 @@
     <script type="text/babel">
         const { useState, useEffect, useRef, useContext, createContext, useMemo, useCallback } = React;
 
+        // Debounce hook for dynamic search
+        const useDebounce = (value, delay) => {
+            const [debounced, setDebounced] = useState(value);
+            useEffect(() => {
+                const timer = setTimeout(() => setDebounced(value), delay);
+                return () => clearTimeout(timer);
+            }, [value, delay]);
+            return debounced;
+        };
+
         // Safe localStorage with quota protection
         const safeStorage = {
             setItem: (key, value) => {
@@ -3094,7 +3104,23 @@
         };
 
         const AppContainer = () => {
-            const { darkMode, setDarkMode, searchQuery, setSearchQuery, handleSearch, setViewMode, viewMode, activePlaylist, fontSize, setFontSize, selectedAyahs, setSelectedAyahs, playlists, setPlaylists, toastMessage, showToast, setRawMatches, setDetailedResults, navigate } = useQuran();
+            const { darkMode, setDarkMode, searchQuery, setSearchQuery, handleSearch, setViewMode, viewMode, activePlaylist, fontSize, setFontSize, selectedAyahs, setSelectedAyahs, playlists, setPlaylists, toastMessage, showToast, setRawMatches, setDetailedResults, navigate, searching } = useQuran();
+
+            // Dynamic search with debounce
+            const [searchInput, setSearchInput] = useState(searchQuery);
+            const debouncedSearch = useDebounce(searchInput, 400); // 400ms delay
+            
+            useEffect(() => {
+                // Update searchInput when searchQuery changes externally
+                setSearchInput(searchQuery);
+            }, [searchQuery]);
+            
+            useEffect(() => {
+                // Trigger search when debounced value changes (min 3 chars)
+                if (debouncedSearch !== searchQuery && debouncedSearch.length >= 3) {
+                    handleSearch(debouncedSearch);
+                }
+            }, [debouncedSearch]);
 
             // Sync Dark Mode with HTML
             useEffect(() => {
@@ -3235,10 +3261,28 @@
                                 </div>
                             </div>
                             <div className="flex gap-2 items-center mb-2">
-                                <form onSubmit={(e) => { e.preventDefault(); handleSearch(searchQuery); }} className="relative group flex-1">
-                                    <input type="text" placeholder="Ara (Örn: namaz, bakara)..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} aria-label="Ayet veya sure ara" className="w-full p-2 pl-9 pr-8 rounded-lg text-sm text-gray-800 bg-white dark:bg-black dark:text-white border-0 focus:ring-2 focus:ring-emerald-400 shadow-sm dark:border dark:border-neutral-700" />
-                                    <button type="submit" aria-label="Ara" className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400 hover:text-emerald-500"><i className="fa-solid fa-search text-sm"></i></button>
-                                    {searchQuery && <button type="button" aria-label="Aramayı temizle" onClick={() => { setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setViewMode('reader'); }} className="absolute right-0 top-0 h-full w-8 flex items-center justify-center text-gray-400 hover:text-red-500"><i className="fa-solid fa-xmark text-sm"></i></button>}
+                                <form onSubmit={(e) => { e.preventDefault(); if (searchInput.length >= 3) handleSearch(searchInput); }} className="relative group flex-1">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Ara (Örn: namaz, bakara)..." 
+                                        value={searchInput} 
+                                        onChange={(e) => setSearchInput(e.target.value)} 
+                                        aria-label="Ayet veya sure ara" 
+                                        className="w-full p-2 pl-9 pr-10 rounded-lg text-sm text-gray-800 bg-white dark:bg-black dark:text-white border-0 focus:ring-2 focus:ring-emerald-400 shadow-sm dark:border dark:border-neutral-700" 
+                                    />
+                                    <div className="absolute left-0 top-0 h-full w-10 flex items-center justify-center text-gray-400">
+                                        {searching ? <i className="fa-solid fa-circle-notch fa-spin text-emerald-500"></i> : <i className="fa-solid fa-search"></i>}
+                                    </div>
+                                    {searchInput && (
+                                        <button 
+                                            type="button" 
+                                            aria-label="Aramayı temizle" 
+                                            onClick={() => { setSearchInput(''); setSearchQuery(''); setRawMatches([]); setDetailedResults([]); setViewMode('reader'); }} 
+                                            className="absolute right-0 top-0 h-full w-8 flex items-center justify-center text-gray-400 hover:text-red-500"
+                                        >
+                                            <i className="fa-solid fa-xmark text-sm"></i>
+                                        </button>
+                                    )}
                                 </form>
                             </div>
                             {/* Navigation Tabs */}
