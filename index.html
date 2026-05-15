@@ -2357,7 +2357,7 @@
             );
 
             return (
-                <main className={`flex-1 overflow-y-auto ios-scroll bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-16 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
+                <main className={`flex-1 overflow-y-auto ios-scroll bg-slate-100 dark:bg-black p-4 md:p-8 scroll-smooth ${viewMode === 'reader' ? 'pt-4 md:pt-8' : 'pt-4 md:pt-8'}`} id="main-scroll">
                     <div className="max-w-4xl mx-auto pb-32">
                         {loading && <div className="flex flex-col items-center justify-center h-64 text-emerald-600 animate-pulse"><i className="fa-solid fa-circle-notch fa-spin text-4xl mb-4"></i><p>{loadingText}</p></div>}
 
@@ -2375,9 +2375,9 @@
                             </div>
                         )}
 
-                        {/* Mobile Surah Select - Only show in reader mode */}
+                        {/* Mobile Surah Select - Sticky at top */}
                         {!loading && !searching && viewMode === 'reader' && (
-                            <div className="md:hidden absolute top-0 left-0 w-full z-10 bg-white dark:bg-black border-b dark:border-neutral-800 p-2 shadow-sm flex gap-2">
+                            <div className="md:hidden sticky top-0 left-0 w-full z-10 bg-white dark:bg-black border-b dark:border-neutral-800 p-2 shadow-sm flex gap-2 mb-4">
                                 <select
                                     onChange={(e) => {
                                         const num = parseInt(e.target.value);
