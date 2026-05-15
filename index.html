@@ -2591,12 +2591,21 @@
 
             // Load notes and fetch ayah details
             React.useEffect(() => {
+                console.log('[DEBUG MyNotesView] surahs length:', surahs.length);
+                console.log('[DEBUG MyNotesView] localStorage length:', localStorage.length);
+                
                 const loadNotesWithAyahs = async () => {
                     const loadedNotes = [];
+                    console.log('[DEBUG MyNotesView] Starting to scan localStorage...');
+                    
                     for (let i = 0; i < localStorage.length; i++) {
                         const key = localStorage.key(i);
+                        console.log('[DEBUG MyNotesView] Checking key:', key);
+                        
                         if (key && key.startsWith('quran_note_')) {
+                            console.log('[DEBUG MyNotesView] Found note key:', key);
                             const noteData = safeStorage.getItem(key);
+                            console.log('[DEBUG MyNotesView] Note data:', noteData ? 'EXISTS' : 'NULL');
                             const match = key.match(/quran_note_(\d+)_(\d+)/);
                             if (match) {
                                 const surahNum = parseInt(match[1]);
@@ -2622,6 +2631,7 @@
                         if (a.surahNum !== b.surahNum) return a.surahNum - b.surahNum;
                         return a.ayahNum - b.ayahNum;
                     });
+                    console.log('[DEBUG MyNotesView] Total notes loaded:', loadedNotes.length);
                     setNotes(loadedNotes);
 
                     // BATCH FETCH: Load ayah details in parallel for better performance
@@ -2662,8 +2672,13 @@
 
                     setLoadingNotes(false);
                 };
-                if (surahs.length > 0) loadNotesWithAyahs();
-            }, [surahs]);
+                if (surahs.length > 0) {
+                    loadNotesWithAyahs();
+                } else {
+                    console.log('[DEBUG MyNotesView] Skipping load - surahs not ready');
+                    setLoadingNotes(false);
+                }
+            }, [surahs, showToast]);
 
             const deleteNote = (key) => {
                 safeStorage.removeItem(key);
