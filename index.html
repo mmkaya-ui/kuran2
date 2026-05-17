@@ -2876,6 +2876,21 @@
             const [notes, setNotes] = useState([]);
             const [ayahDetails, setAyahDetails] = useState({});
 
+            // Cycling notes search placeholder to prevent cutoff on mobile screens
+            const [notePlaceholderIdx, setNotePlaceholderIdx] = useState(0);
+            const notePlaceholders = [
+                "Notlarında ara... (Örn: şüphesiz)",
+                "Sure/ayet ile ara... (Örn: Bakara 183)",
+                "Meal veya notta ara... (Örn: sabır)"
+            ];
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setNotePlaceholderIdx(prev => (prev + 1) % notePlaceholders.length);
+                }, 3500);
+                return () => clearInterval(timer);
+            }, []);
+
             // Load notes with stored ayah data - NO API calls needed!
             useEffect(() => {
                 const loadNotes = () => {
@@ -3082,7 +3097,7 @@
                         <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Sure adı, ayet no, meal veya not içinde ara... (Örn: Bakara 183)"
+                                placeholder={notePlaceholders[notePlaceholderIdx]}
                                 value={noteSearchQuery}
                                 onChange={(e) => setNoteSearchQuery(e.target.value)}
                                 className="w-full p-2.5 pl-10 pr-8 rounded-lg text-sm bg-white dark:bg-black border border-gray-200 dark:border-neutral-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition-colors"
@@ -3221,6 +3236,22 @@
 
         const AppContainer = () => {
             const { darkMode, setDarkMode, searchQuery, setSearchQuery, handleSearch, setViewMode, viewMode, activePlaylist, fontSize, setFontSize, selectedAyahs, setSelectedAyahs, playlists, setPlaylists, toastMessage, showToast, setRawMatches, setDetailedResults, navigate, searching } = useQuran();
+
+            // Cycling search placeholder to prevent cutoff on mobile screens
+            const [placeholderIndex, setPlaceholderIndex] = useState(0);
+            const searchPlaceholders = [
+                "Sure/Ayet ara... (Örn: Bakara 183)",
+                "Kelime ara... (Örn: namaz sabır)",
+                "Sure no ile git... (Örn: 18 10)",
+                "Ayet no'ya git... (Örn: Tevbe 3)"
+            ];
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setPlaceholderIndex(prev => (prev + 1) % searchPlaceholders.length);
+                }, 3500); // cycle every 3.5 seconds
+                return () => clearInterval(timer);
+            }, []);
 
             // Dynamic search with debounce
             const [searchInput, setSearchInput] = useState(searchQuery);
@@ -3380,7 +3411,7 @@
                                 <form onSubmit={(e) => { e.preventDefault(); if (searchInput.length >= 3) handleSearch(searchInput); }} className="relative group flex-1">
                                     <input 
                                         type="text" 
-                                        placeholder="Sure adı ve ayet no veya kelime ara... (Örn: Bakara 183)" 
+                                        placeholder={searchPlaceholders[placeholderIndex]} 
                                         value={searchInput} 
                                         onChange={(e) => setSearchInput(e.target.value)} 
                                         aria-label="Ayet veya sure ara" 
