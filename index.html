@@ -995,6 +995,11 @@
             const playAyahRef = useRef(null);
             const scrollPositionRef = useRef(0); // Store scroll position when switching views
 
+            // Reset scroll memory when surah changes
+            useEffect(() => {
+                scrollPositionRef.current = 0;
+            }, [activeSurah]);
+
             // ═══════════════════════════════════════════════════
             // SECTION 3 — PLAYLIST & SELECTION
             // ═══════════════════════════════════════════════════
@@ -1895,7 +1900,7 @@
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
-                toastMessage, showToast
+                toastMessage, showToast, scrollPositionRef
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -2479,10 +2484,12 @@
                 searching, searchQuery, handleSearch, currentSearchTerm, rawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType, sortedSurahs,
-                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast
+                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionRef
             } = useQuran();
 
-            const lastScrolledAyah = useRef(null);
+            // Initialize lastScrolledAyah to activeAyah.number if returning to a saved scroll position,
+            // to bypass the initial smooth auto-scroll and jump instantly.
+            const lastScrolledAyah = useRef(scrollPositionRef.current > 0 ? activeAyah?.number : null);
 
             // Smart Scroll Detection - Hide/Show Mobile Surah Select on scroll
             const [showMobileSelect, setShowMobileSelect] = useState(true);
