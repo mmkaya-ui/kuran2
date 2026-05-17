@@ -2526,7 +2526,7 @@
             useEffect(() => {
                 if (skipDisplayResetRef?.current) { skipDisplayResetRef.current = false; return; }
                 setDisplayLimit(10);
-            }, [viewMode, activeSurah, searchQuery]);
+            }, [activeSurah, searchQuery]);
 
             const handleLoadMore = useCallback(() => {
                 if (viewMode === 'reader' && displayLimit < ayahs.length) {
