@@ -1030,6 +1030,14 @@
 
                 const unlock = () => {
                     if (unlocked) return;
+                    // Eğer kullanıcı gerçekten bir oynatma başlattıysa, unlock işlemi yaparken 
+                    // pause() ve currentTime=0 yaparak sesi başa sarmasını engelliyoruz.
+                    if (isPlayingRef.current) {
+                        unlocked = true;
+                        window.removeEventListener('touchstart', unlock);
+                        window.removeEventListener('click', unlock, true);
+                        return;
+                    }
                     try {
                         audio.play().then(() => {
                             audio.pause();
@@ -1085,12 +1093,16 @@
                     if (scrollPositionRef.current > 0) {
                         setTimeout(() => {
                             window.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
-                            scrollPositionRef.current = 0; // Reset after restoring
                         }, 50);
                     }
-                } else if (viewMode === 'my_notes' || viewMode === 'playlists_list') {
-                    // Notlar/Listeler view'a giderken scroll pozisyonunu kaydet
-                    scrollPositionRef.current = window.scrollY;
+                    
+                    // Notlar/Listeler view'a giderken tam ayrilmadan onceki degeri yakalamak icin
+                    // surekli scroll dinleyicisi ekliyoruz. Boylece unmount oldugunda elimizde son pozisyon kalir.
+                    const handleScroll = () => {
+                        scrollPositionRef.current = window.scrollY;
+                    };
+                    window.addEventListener('scroll', handleScroll, { passive: true });
+                    return () => window.removeEventListener('scroll', handleScroll);
                 }
             }, [viewMode]);
 
