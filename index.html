@@ -2367,10 +2367,10 @@
             if (!activeAyah) return null;
 
             return (
-                <div role="region" aria-label="Ses çalar" className="fixed bottom-2 left-2 right-2 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[600px] bg-white dark:bg-black border border-emerald-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-2 md:p-3 z-50 flex flex-col gap-1.5 md:gap-2 transition-transform duration-300 pb-[calc(env(safe-area-inset-bottom)+8px)] md:pb-[calc(env(safe-area-inset-bottom)+4px)]">
+                <div role="region" aria-label="Ses çalar" className="absolute bottom-2 left-2 right-2 md:left-1/2 md:right-auto transform md:-translate-x-1/2 md:w-[600px] bg-white dark:bg-black border border-emerald-500/30 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-2 md:p-3 z-50 flex flex-col gap-1.5 md:gap-2 transition-transform duration-300 pb-[calc(env(safe-area-inset-bottom)+8px)] md:pb-[calc(env(safe-area-inset-bottom)+4px)]">
                     
-                    {/* Row 1: Title & Close Button (Mobile optimized) */}
-                    <div className="flex items-center justify-between px-2 pt-1 md:hidden">
+                    {/* Row 1: Title & Close Button (Unified for both Mobile & Desktop) */}
+                    <div className="flex items-center justify-between px-2 pt-1">
                         <button onClick={scrollToActiveAyah} className="flex-1 min-w-0 pr-2 text-left group flex items-center gap-2" title="Ayete git" aria-label={`${activeAyah.surahName} ${activeAyah.numberInSurah}. ayete git`}>
                             <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate group-hover:text-emerald-600 transition-colors">
                                 {activeAyah.surahName} {activeAyah.numberInSurah}. Ayet 
@@ -2379,8 +2379,8 @@
                                 Git <i className="fa-solid fa-location-crosshairs text-[10px]"></i>
                             </span>
                         </button>
-                        <button onClick={closePlayer} aria-label="Çaları kapat" className="w-7 h-7 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center shrink-0 ml-1">
-                            <i className="fa-solid fa-xmark text-xs"></i>
+                        <button onClick={closePlayer} aria-label="Çaları kapat" className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center shrink-0 ml-1 transition-colors">
+                            <i className="fa-solid fa-xmark text-xs md:text-sm"></i>
                         </button>
                     </div>
 
@@ -2399,17 +2399,7 @@
                         <span className="text-[10px] text-gray-500 dark:text-slate-400 font-mono w-8">{formatTime(duration)}</span>
                     </div>
 
-                    <div className="flex items-center justify-between px-2 pb-1">
-                        {/* Desktop Only Ayah Title */}
-                        <button onClick={scrollToActiveAyah} className="hidden md:flex flex-1 min-w-0 pr-4 text-left group items-center gap-2" title="Ayete git" aria-label={`${activeAyah.surahName} ${activeAyah.numberInSurah}. ayete git`}>
-                            <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate group-hover:text-emerald-600 transition-colors">
-                                {activeAyah.surahName} {activeAyah.numberInSurah}. Ayet
-                            </h3>
-                            <span className="text-[9px] font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 px-1.5 py-0.5 rounded-full shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                Git <i className="fa-solid fa-location-crosshairs"></i>
-                            </span>
-                        </button>
-                        
+                    <div className="px-2 pb-1">
                         <div className="flex items-center justify-between w-full gap-2">
                             {/* Left: Playback speed */}
                             <div className="flex-1 flex justify-start">
@@ -3397,8 +3387,10 @@
 
                     <div className="flex flex-1 overflow-hidden relative">
                         <SurahList />
-                        <MainContent />
-                        <PlayerBar />
+                        <div className="flex-1 flex flex-col relative overflow-hidden">
+                            <MainContent />
+                            <PlayerBar />
+                        </div>
                     </div>
 
                     {/* Bulk Actions Floating Bar */}
