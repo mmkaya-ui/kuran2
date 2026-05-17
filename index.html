@@ -2371,13 +2371,15 @@
                     
                     {/* Row 1: Title & Close Button (Mobile optimized) */}
                     <div className="flex items-center justify-between px-2 pt-1 md:hidden">
-                        <button onClick={scrollToActiveAyah} className="flex-1 min-w-0 pr-2 text-left group" title="Ayete git" aria-label={`${activeAyah.surahName} ${activeAyah.numberInSurah}. ayete git`}>
+                        <button onClick={scrollToActiveAyah} className="flex-1 min-w-0 pr-2 text-left group flex items-center gap-2" title="Ayete git" aria-label={`${activeAyah.surahName} ${activeAyah.numberInSurah}. ayete git`}>
                             <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 truncate group-hover:text-emerald-600 transition-colors">
                                 {activeAyah.surahName} {activeAyah.numberInSurah}. Ayet 
-                                <i className="fa-solid fa-location-crosshairs text-[10px] ml-1.5 opacity-60 transition-opacity"></i>
                             </h3>
+                            <span className="text-[10px] font-medium bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 border border-emerald-100 dark:border-emerald-800/50">
+                                Bul <i className="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                            </span>
                         </button>
-                        <button onClick={closePlayer} aria-label="Çaları kapat" className="w-7 h-7 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center shrink-0">
+                        <button onClick={closePlayer} aria-label="Çaları kapat" className="w-7 h-7 rounded-full bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center shrink-0 ml-1">
                             <i className="fa-solid fa-xmark text-xs"></i>
                         </button>
                     </div>
@@ -2399,8 +2401,13 @@
 
                     <div className="flex items-center justify-between px-2 pb-1">
                         {/* Desktop Only Ayah Title */}
-                        <button onClick={scrollToActiveAyah} className="hidden md:block flex-1 min-w-0 pr-4 text-left group" title="Ayete git" aria-label={`${activeAyah.surahName} ${activeAyah.numberInSurah}. ayete git`}>
-                            <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate group-hover:text-emerald-600 transition-colors">{activeAyah.surahName} {activeAyah.numberInSurah}. Ayet <i className="fa-solid fa-location-crosshairs text-[9px] opacity-0 group-hover:opacity-60 transition-opacity"></i></h3>
+                        <button onClick={scrollToActiveAyah} className="hidden md:flex flex-1 min-w-0 pr-4 text-left group items-center gap-2" title="Ayete git" aria-label={`${activeAyah.surahName} ${activeAyah.numberInSurah}. ayete git`}>
+                            <h3 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate group-hover:text-emerald-600 transition-colors">
+                                {activeAyah.surahName} {activeAyah.numberInSurah}. Ayet
+                            </h3>
+                            <span className="text-[9px] font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 px-1.5 py-0.5 rounded-full shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                Bul <i className="fa-solid fa-arrow-up-right-from-square"></i>
+                            </span>
                         </button>
                         
                         <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-2 md:gap-3 shrink-0">
@@ -2834,7 +2841,7 @@
                                                     );
                                                     if (lines.length === 0) { showToast('Liste henüz yüklenmedi, lütfen önce listeyi açın.'); return; }
                                                     const content = `${p.name}\n${'='.repeat(p.name.length)}\n\n${lines.join('\n')}`;
-                                                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+                                                    const blob = new Blob(['\uFEFF', content], { type: 'text/plain;charset=utf-8' });
                                                     const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
                                                     a.download = `${p.name.replace(/[^a-z0-9]/gi,'_')}.txt`; a.click();
                                                     showToast(`'${p.name}' metin olarak aktarıldı.`);
