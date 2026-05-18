@@ -1110,10 +1110,16 @@
                 const onPlay = () => {
                     setIsPlaying(true);
                     isPlayingRef.current = true;
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.playbackState = "playing";
+                    }
                 };
                 const onPause = () => {
                     setIsPlaying(false);
                     isPlayingRef.current = false;
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.playbackState = "paused";
+                    }
                 };
                 const onEnded = () => {
                     const now = Date.now();
@@ -1492,9 +1498,15 @@
                             if (e.name !== 'AbortError') console.error("Play error:", e);
                             else isPlayingRef.current = false;
                         });
+                        if ('mediaSession' in navigator) {
+                            navigator.mediaSession.playbackState = "playing";
+                        }
                     } else {
                         isPlayingRef.current = false;
                         audio.pause();
+                        if ('mediaSession' in navigator) {
+                            navigator.mediaSession.playbackState = "paused";
+                        }
                     }
                     return;
                 }
@@ -1504,6 +1516,26 @@
                 }
 
                 const targetSrc = ayah.audio || "";
+                
+                // Synchronously update Media Session Metadata and State to preserve lockscreen persistence
+                if ('mediaSession' in navigator) {
+                    try {
+                        const surahName = ayah.surahName || getSurahNameTR(ayah.surahNumber || activeSurah?.number);
+                        navigator.mediaSession.metadata = new MediaMetadata({
+                            title: `Ayet ${ayah.numberInSurah} (${surahName})`,
+                            artist: 'Kur\'an-ı Kerim',
+                            album: surahName,
+                            artwork: [
+                                { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+                                { src: 'icon-512.png', sizes: '512x512', type: 'image/png' }
+                            ]
+                        });
+                        navigator.mediaSession.playbackState = "playing";
+                    } catch (e) {
+                        console.warn("Failed to set MediaSession metadata:", e);
+                    }
+                }
+
                 // Use getAttribute to get literal src for reliable comparison
                 const currentSrc = audio.getAttribute('src');
                 if (currentSrc !== targetSrc) {
@@ -1521,9 +1553,15 @@
                         if (e.name !== 'AbortError') console.error("Play error:", e);
                         else isPlayingRef.current = false;
                     });
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.playbackState = "playing";
+                    }
                 } else {
                     setIsPlaying(false);
                     isPlayingRef.current = false;
+                    if ('mediaSession' in navigator) {
+                        navigator.mediaSession.playbackState = "none";
+                    }
                 }
             };
             playAyahRef.current = playAyah;
