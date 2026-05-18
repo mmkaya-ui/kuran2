@@ -30,6 +30,7 @@
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.3/purify.min.js"></script>
 
     <!-- React & Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -878,6 +879,7 @@
                             }
                         }
                     }
+                    window.dispatchEvent(new CustomEvent('quran_storage_full'));
                     return false;
                 }
             },
@@ -1027,6 +1029,14 @@
                 toastTimerRef.current = setTimeout(() => setToastMessage(""), 3000);
             }, []);
 
+            useEffect(() => {
+                const handleStorageFull = () => {
+                    showToast("Cihaz hafızası dolu, yapılan değişiklikler kaydedilemedi!");
+                };
+                window.addEventListener('quran_storage_full', handleStorageFull);
+                return () => window.removeEventListener('quran_storage_full', handleStorageFull);
+            }, [showToast]);
+
             // iOS audio unlock — ensure a user gesture primes the audio context
             useEffect(() => {
                 const audio = audioRef.current;
@@ -1063,33 +1073,6 @@
                 };
             }, []);
 
-            // YENİ: Dinamik Önbellekleme (Aggressive Prefetching)
-            // Çalan ayet değiştiğinde, sıradaki 5 ayetin ses dosyasını hemen indirir.
-            useEffect(() => {
-                if (!activeAyah) return;
-
-                // Hangi listedeyiz?
-                const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
-                if (!list || list.length === 0) return;
-
-                const currentIndex = list.findIndex(a => a.number === activeAyah.number);
-                if (currentIndex === -1) return;
-
-                // Sıradaki 5 ayeti belirle
-                const nextAyahs = list.slice(currentIndex + 1, currentIndex + 6);
-
-                // Hemen indirmeye başla (Gecikme yok)
-                // CPU'yu anlık kilitlememek için çok kısa bir timeout (50ms)
-                const timer = setTimeout(() => {
-                    nextAyahs.forEach(ayah => {
-                        if (ayah.audio) {
-                            fetch(ayah.audio, { priority: 'low' }).catch(() => { });
-                        }
-                    });
-                }, 50);
-
-                return () => clearTimeout(timer);
-            }, [activeAyah, viewMode, ayahs, detailedResults, activePlaylist]);
 
             // Scroll pozisyonunu kaydet ve geri yukle (Notlar/Listeler <-> Kuran view)
             useEffect(() => {
@@ -1648,6 +1631,13 @@
                         if (cached) {
                             try {
                                 quranData = JSON.parse(cached);
+                                // Backfill normalizedText for older caches to avoid re-downloads
+                                if (quranData && quranData.length > 0 && !quranData[0].normalizedText) {
+                                    quranData.forEach(item => {
+                                        item.normalizedText = normalizeText(item.text);
+                                    });
+                                    safeStorage.setItem(CACHE_KEY, JSON.stringify(quranData));
+                                }
                                 fullQuranIndex.current = quranData;
                             } catch(e) { localStorage.removeItem(CACHE_KEY); localStorage.removeItem(CACHE_TS_KEY); }
                         }
@@ -1675,11 +1665,13 @@
                                 for (let i = 0; i < baseSurahs.length; i++) {
                                     for (let j = 0; j < baseSurahs[i].ayahs.length; j++) {
                                         const texts = allSurahs.map(edSurahs => edSurahs[i]?.ayahs[j]?.text || "");
+                                        const combinedText = texts.join(" ");
                                         quranData.push({
                                             surah: { number: baseSurahs[i].number },
                                             number: baseSurahs[i].ayahs[j].number, // Global number
                                             numberInSurah: baseSurahs[i].ayahs[j].numberInSurah,
-                                            text: texts.join(" ")
+                                            text: combinedText,
+                                            normalizedText: normalizeText(combinedText)
                                         });
                                     }
                                 }
@@ -1771,7 +1763,7 @@
 
                     let allMatches = quranData.filter(item => {
                         if (scopedSurahID && item.surah.number !== scopedSurahID) return false;
-                        return normalizeText(item.text).includes(actualSearchTerm);
+                        return item.normalizedText.includes(actualSearchTerm);
                     });
 
                     allMatches = sortMatches(allMatches, sortType);
@@ -2062,15 +2054,10 @@
                     const tefsirDiv = doc.querySelector('.tefsir-text');
                     
                     if (tefsirDiv) {
-                        // Gereksiz boşlukları ve scriptleri temizle, event handler'ları kaldır
-                        const cleanText = tefsirDiv.innerHTML
-                            .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
-                            .replace(/<iframe\b[^>]*>([\s\S]*?)<\/iframe>/gim, "")
-                            .replace(/\s*on\w+="[^"]*"/gi, "")
-                            .replace(/\s*on\w+='[^']*'/gi, "")
-                            .replace(/href="javascript:[^"]*"/gi, "href=\"#\" target=\"_blank\" rel=\"noopener\"")
-                            .replace(/style="[^"]*"/g, "")
-                            .replace(/class="[^"]*"/g, "");
+                        const cleanText = DOMPurify.sanitize(tefsirDiv.innerHTML, {
+                            ALLOWED_TAGS: ['p', 'b', 'i', 'em', 'strong', 'a', 'br', 'ul', 'ol', 'li', 'span', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'],
+                            ALLOWED_ATTR: ['href', 'target', 'rel']
+                        });
                         setDiyanetTafsir(cleanText);
                     } else {
                         setDiyanetTafsir("<p class='text-sm text-red-500'>Tefsir metni bu sayfadan çekilemedi. Lütfen Diyanet'in sitesinden kontrol edin.</p>");
