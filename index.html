@@ -1631,13 +1631,10 @@
                         if (cached) {
                             try {
                                 quranData = JSON.parse(cached);
-                                // Backfill normalizedText for older caches to avoid re-downloads
-                                if (quranData && quranData.length > 0 && !quranData[0].normalizedText) {
-                                    quranData.forEach(item => {
-                                        item.normalizedText = normalizeText(item.text);
-                                    });
-                                    safeStorage.setItem(CACHE_KEY, JSON.stringify(quranData));
-                                }
+                                // Calculate normalizedText ONLY in RAM to save localStorage quota
+                                quranData.forEach(item => {
+                                    item.normalizedText = normalizeText(item.text);
+                                });
                                 fullQuranIndex.current = quranData;
                             } catch(e) { localStorage.removeItem(CACHE_KEY); localStorage.removeItem(CACHE_TS_KEY); }
                         }
@@ -1670,13 +1667,19 @@
                                             surah: { number: baseSurahs[i].number },
                                             number: baseSurahs[i].ayahs[j].number, // Global number
                                             numberInSurah: baseSurahs[i].ayahs[j].numberInSurah,
-                                            text: combinedText,
-                                            normalizedText: normalizeText(combinedText)
+                                            text: combinedText
                                         });
                                     }
                                 }
+                                // Save lightweight index to localStorage (avoids QuotaExceededError)
+                                safeStorage.setItem('quran_index_v2', JSON.stringify(quranData)); 
+                                safeStorage.setItem('quran_index_v2_ts', String(Date.now()));
+
+                                // Enrich RAM cache with normalizedText for instant searching
+                                quranData.forEach(item => {
+                                    item.normalizedText = normalizeText(item.text);
+                                });
                                 fullQuranIndex.current = quranData;
-                                safeStorage.setItem('quran_index_v2', JSON.stringify(quranData)); safeStorage.setItem('quran_index_v2_ts', String(Date.now()));
                             } catch (err) {
                                 console.error("Indexing failed:", err);
                                 showToast("Arama hazırlanamadı: " + err.message);
