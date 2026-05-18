@@ -1,6 +1,6 @@
-const CACHE_NAME = 'quran-v26';
-const DYNAMIC_CACHE_NAME = 'quran-app-dynamic-v26';
-const AUDIO_CACHE_NAME = 'quran-audio-v26';
+const CACHE_NAME = 'quran-v27';
+const DYNAMIC_CACHE_NAME = 'quran-app-dynamic-v27';
+const AUDIO_CACHE_NAME = 'quran-audio-v27';
 
 const MAX_AUDIO_ENTRIES = 500;   // ~40MB limit for audio files
 const MAX_API_ENTRIES   = 100;   // API responses limit

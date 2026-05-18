@@ -1031,6 +1031,15 @@
                     }
                     try {
                         audio.play().then(() => {
+                            // KORUMA: Eğer biz playPromise.then()'e girdiğimizde kullanıcı zaten 
+                            // butona basıp gerçek oynatmayı başlattıysa (isPlayingRef.current true ise),
+                            // aktif oynatmayı pause edip bölmüyoruz!
+                            if (isPlayingRef.current) {
+                                unlocked = true;
+                                window.removeEventListener('touchstart', unlock);
+                                window.removeEventListener('click', unlock, true);
+                                return;
+                            }
                             audio.pause();
                             audio.currentTime = 0;
                             unlocked = true;
