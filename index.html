@@ -1095,8 +1095,13 @@
                         skipDisplayResetRef.current = true;
                         setDisplayLimit(Math.max(idx + 10, 10));
                         setTimeout(() => {
-                            setActiveAyah(target);
-                            if (shouldPlay) playAyahRef.current?.(target, { forcePlay: true });
+                            if (shouldPlay) {
+                                setActiveAyah(target);
+                                playAyahRef.current?.(target, { forcePlay: true });
+                            } else {
+                                const el = document.getElementById(`ayah-${target.number}`);
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
                         }, 300);
                         return;
                     }
@@ -1637,8 +1642,10 @@
                         skipDisplayResetRef.current = true;
                         setDisplayLimit(Math.max(idx + 10, 10));
                         setTimeout(() => {
-                            setActiveAyah(target);
-                            if (shouldPlay) playAyahRef.current?.(target, { forcePlay: true });
+                            if (shouldPlay) {
+                                setActiveAyah(target);
+                                playAyahRef.current?.(target, { forcePlay: true });
+                            }
                             // lastScrolledAyah in MainContent may still hold this ayah's number
                             // so the auto-scroll useEffect won't fire — scroll manually
                             const el = document.getElementById(`ayah-${target.number}`);
