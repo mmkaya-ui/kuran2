@@ -170,6 +170,7 @@ import { bigCache } from "../lib/storage.js";
             // cleared when the user manually taps play in reader/search view.
             // This allows playlist order to be preserved even after switching to reader view.
             const playlistPlaybackRef = useRef(false);
+            const playbackPlaylistRef = useRef(null);
 
             // Reset scroll memory when surah changes
             useEffect(() => {
@@ -312,6 +313,21 @@ import { bigCache } from "../lib/storage.js";
                         setTimeout(() => {
                             setActiveAyah(target);
                             if (shouldPlay) playAyahRef.current?.(target, { forcePlay: true, automatic: true, isAdvance: true });
+                            
+                            // Scroll manually after a delay to allow the DOM to render the new ayahs
+                            let attempts = 0;
+                            const maxAttempts = 10;
+                            const tryScroll = () => {
+                                const el = document.getElementById(`ayah-${target.number}`);
+                                if (el) {
+                                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    return;
+                                }
+                                if (++attempts < maxAttempts) {
+                                    setTimeout(tryScroll, 100);
+                                }
+                            };
+                            setTimeout(tryScroll, 100);
                         }, 300);
                         return;
                     }
@@ -791,7 +807,9 @@ import { bigCache } from "../lib/storage.js";
                 // Automatic calls (chain from onEnded / playNext) or sequential advances inherit the current context;
                 // only manual user card taps reset or set the flag.
                 if (!options.automatic && !options.isAdvance) {
-                    playlistPlaybackRef.current = (viewMode === 'playlist_view');
+                    const isPlaylist = viewMode === 'playlist_view';
+                    playlistPlaybackRef.current = isPlaylist;
+                    playbackPlaylistRef.current = isPlaylist ? activePlaylist : null;
                 }
 
                 // 1. Update the Audio element FIRST (no explicit pause() or load() to prevent lockscreen dismissal)
@@ -905,8 +923,9 @@ import { bigCache } from "../lib/storage.js";
                 // Playlist mode is determined by whether playback was *started* from playlist_view,
                 // NOT by which view is currently visible. This ensures playlist order is respected
                 // even when the user switches to reader view while a playlist is playing.
-                const isPlaylistMode = playlistPlaybackRef.current && !!activePlaylist;
-                const list = isPlaylistMode ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
+                const playingPlaylist = playbackPlaylistRef.current;
+                const isPlaylistMode = playlistPlaybackRef.current && !!playingPlaylist;
+                const list = isPlaylistMode ? playingPlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
 
                 // idx === -1 means the currently playing ayah is not found in the current list.
@@ -933,7 +952,7 @@ import { bigCache } from "../lib/storage.js";
                 } else if (idx === list.length - 1 && repeatMode === 'none') {
                     if (isPlaylistMode) {
                         // Playlist finished — show toast regardless of which view is visible
-                        showToast(`Liste bitti: ${activePlaylist?.name}`);
+                        showToast(`Liste bitti: ${playingPlaylist?.name}`);
                     } else if (viewMode === 'reader' && activeSurah) {
                         const currentIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
                         const nextSurah = (currentIdx !== -1 && currentIdx < sortedSurahs.length - 1) ? sortedSurahs[currentIdx + 1] : null;
@@ -971,8 +990,9 @@ import { bigCache } from "../lib/storage.js";
                 const actualOptions = (options && typeof options.preventDefault === 'function') ? {} : options;
 
                 // Playlist mode is determined by whether playback was *started* from playlist_view.
-                const isPlaylistMode = playlistPlaybackRef.current && !!activePlaylist;
-                const list = isPlaylistMode ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
+                const playingPlaylist = playbackPlaylistRef.current;
+                const isPlaylistMode = playlistPlaybackRef.current && !!playingPlaylist;
+                const list = isPlaylistMode ? playingPlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
                 // User navigated away from reader/search — play previous ayah without changing view.
                 // In playlist mode, guard against hydration edge cases but don't jump globally.
@@ -1378,7 +1398,7 @@ import { bigCache } from "../lib/storage.js";
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
-                toastMessage, showToast, scrollPositionRef, playlistPlaybackRef
+                toastMessage, showToast, scrollPositionRef, playlistPlaybackRef, playbackPlaylistRef
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1819,7 +1839,7 @@ import { bigCache } from "../lib/storage.js";
         });
 
         const PlayerBar = () => {
-            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, repeatMode, setRepeatMode, fetchSurah, surahs, jumpTargetRef, setViewMode, activePlaylist, viewMode } = useQuran();
+            const { activeAyah, isPlaying, playAyah, closePlayer, playNext, playPrev, audioRef, playbackRate, setPlaybackRate, repeatMode, setRepeatMode, fetchSurah, surahs, jumpTargetRef, setViewMode, activePlaylist, setActivePlaylist, viewMode, playlistPlaybackRef, playbackPlaylistRef } = useQuran();
 
             // Local state for high-frequency updates
             const [currentTime, setCurrentTime] = useState(0);
@@ -1856,36 +1876,50 @@ import { bigCache } from "../lib/storage.js";
                 if (!activeAyah) return;
                 
                 // Check if current playback is from a playlist
-                const isPlaylistPlayback = playlistPlaybackRef.current && !!activePlaylist;
+                const isPlaylistPlayback = playlistPlaybackRef.current && !!playbackPlaylistRef.current;
                 
                 // If playlist playback, go to playlist view; otherwise go to reader view
                 const targetViewMode = isPlaylistPlayback ? 'playlist_view' : 'reader';
                 const needsViewChange = viewMode !== targetViewMode;
                 
+                if (isPlaylistPlayback) {
+                    // Restore the active playlist if it was changed
+                    if (activePlaylist?.id !== playbackPlaylistRef.current?.id) {
+                        setActivePlaylist(playbackPlaylistRef.current);
+                    }
+                }
+                
                 if (needsViewChange) {
                     setViewMode(targetViewMode);
                 }
                 
-                // Delay to allow view transition to complete before DOM lookup
-                setTimeout(() => {
-                    // Try to find and scroll to the ayah
-                    const el = document.getElementById(`ayah-${activeAyah.number}`);
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        return;
-                    }
-                    
-                    // If not found and it's normal surah playback (not playlist), fetch the surah
-                    if (!isPlaylistPlayback) {
-                        const targetSurahNum = parseInt(activeAyah.surahNumber);
-                        const targetAyahNum = parseInt(activeAyah.numberInSurah);
-                        if (!targetSurahNum || !targetAyahNum) return;
-                        const s = surahs.find(x => x.number === targetSurahNum);
-                        if (!s) return;
-                        jumpTargetRef.current = { ayahNumber: targetAyahNum, shouldPlay: false };
-                        fetchSurah(s);
-                    }
-                }, needsViewChange ? 100 : 0);
+                // If playlist playback, or normal playback with SAME surah: retry scroll to find the element
+                const targetSurahNum = parseInt(activeAyah.surahNumber);
+                const targetAyahNum = parseInt(activeAyah.numberInSurah);
+                const isSameSurah = !isPlaylistPlayback && activeSurah?.number === targetSurahNum;
+
+                if (isPlaylistPlayback || isSameSurah) {
+                    let attempts = 0;
+                    const maxAttempts = 15; // Up to 1.5 seconds to account for slower devices
+                    const tryScroll = () => {
+                        const el = document.getElementById(`ayah-${activeAyah.number}`);
+                        if (el) {
+                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            return;
+                        }
+                        if (++attempts < maxAttempts) {
+                            setTimeout(tryScroll, 100);
+                        }
+                    };
+                    setTimeout(tryScroll, needsViewChange ? 150 : 50);
+                } else {
+                    // Different surah in normal playback: fetch the surah
+                    if (!targetSurahNum || !targetAyahNum) return;
+                    const s = surahs.find(x => x.number === targetSurahNum);
+                    if (!s) return;
+                    jumpTargetRef.current = { ayahNumber: targetAyahNum, shouldPlay: false };
+                    fetchSurah(s);
+                }
             };
 
             // Klavye kısayolları
