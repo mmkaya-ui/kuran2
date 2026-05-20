@@ -1360,7 +1360,7 @@ import { bigCache } from "../lib/storage.js";
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
-                toastMessage, showToast, scrollPositionRef
+                toastMessage, showToast, scrollPositionRef, playlistPlaybackRef
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -1390,7 +1390,7 @@ import { bigCache } from "../lib/storage.js";
             const {
                 activeAyah, isPlaying, playAyah,
                 fontSize, selectedAyahs, setSelectedAyahs,
-                playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark, setBookmark
+                playlists, setPlaylists, viewMode, activePlaylist, showToast, bookmark, setBookmark, playlistPlaybackRef
             } = useQuran();
 
             const [showTafsir, setShowTafsir] = useState(false);
@@ -1551,18 +1551,21 @@ import { bigCache } from "../lib/storage.js";
                 });
             };
 
-            // Decoupled isActive: Only highlight in the appropriate view context
+            // Decoupled isActive: Only highlight in the appropriate view context.
+            // Use playlistPlaybackRef to determine if playback was started FROM playlist_view,
+            // not just whether the ayah happens to exist in a playlist.
             const isPlaylistItem = activePlaylist?.items?.some(item => item.number === ayahData.number);
-            const isPlaylistPlaybackActive = activePlaylist?.items?.some(item => item.number === activeAyah?.number);
-            
+            const isPlaylistPlayback = playlistPlaybackRef.current;
+
             let isActive = false;
             if (activeAyah?.number === ayahData.number) {
                 if (viewMode === 'playlist_view' && isPlaylistItem) {
                     isActive = true; // Playlist view: only highlight playlist items
-                } else if (viewMode === 'reader' && !isPlaylistPlaybackActive) {
-                    isActive = true; // Reader view: only highlight if NOT playlist playback
+                } else if (viewMode === 'reader' && !isPlaylistPlayback) {
+                    isActive = true; // Reader view: highlight if playback did NOT originate from playlist
+                } else if (viewMode === 'search') {
+                    isActive = true; // Search view: always highlight the playing ayah
                 }
-                // In other views (search, notes, etc.), don't highlight for simplicity
             }
             const isSelected = selectedAyahs.some(s => s.number === ayahData.number);
 
@@ -2411,7 +2414,8 @@ import { bigCache } from "../lib/storage.js";
                 searching, searchQuery, handleSearch, currentSearchTerm, rawMatches, setRawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType, sortedSurahs,
-                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionRef
+                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionRef,
+                playlistPlaybackRef
             } = useQuran();
 
             // Initialize lastScrolledAyah to activeAyah.number if returning to a saved scroll position,
@@ -2467,10 +2471,11 @@ import { bigCache } from "../lib/storage.js";
                         return;
                     }
 
-                    // DECOUPLING: Don't auto-scroll in reader view when playlist playback is active
-                    // Playlist playback and reader view are independent systems
-                    const isPlaylistPlaybackActive = activePlaylist?.items?.some(item => item.number === activeAyah?.number);
-                    if (viewMode === 'reader' && isPlaylistPlaybackActive) {
+                    // DECOUPLING: Don't auto-scroll in reader view when playback was started from playlist_view.
+                    // Use playlistPlaybackRef (the authoritative origin flag) instead of checking whether
+                    // the ayah happens to exist in a playlist — that would incorrectly suppress scrolling
+                    // when the user plays a reader ayah that also appears in a playlist.
+                    if (viewMode === 'reader' && playlistPlaybackRef.current) {
                         lastScrolledAyah.current = activeAyah.number;
                         return;
                     }
