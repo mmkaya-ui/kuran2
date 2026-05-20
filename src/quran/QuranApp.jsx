@@ -723,7 +723,18 @@ import { bigCache } from "../lib/storage.js";
                                 details.forEach(d => { newItemsMap[d.number] = d; });
                             }
 
-                            const updater = (list) => list.map(item => newItemsMap[item.number] || item);
+                            const updater = (list) => list.map(item => {
+                                if (newItemsMap[item.number]) {
+                                    return newItemsMap[item.number];
+                                }
+                                // If this item was in the uniquePartials chunk we tried to fetch but it failed,
+                                // strip the isPartial flag to prevent an infinite hydration fetch loop.
+                                if (uniquePartials.some(up => up.number === item.number)) {
+                                    const { isPartial, ...rest } = item;
+                                    return rest;
+                                }
+                                return item;
+                            });
 
                             setPlaylists(prev => prev.map(p => {
                                 if (p.id === activePlaylist.id) {
@@ -1559,12 +1570,10 @@ import { bigCache } from "../lib/storage.js";
 
             let isActive = false;
             if (activeAyah?.number === ayahData.number) {
-                if (viewMode === 'playlist_view' && isPlaylistItem) {
-                    isActive = true; // Playlist view: only highlight playlist items
-                } else if (viewMode === 'reader' && !isPlaylistPlayback) {
-                    isActive = true; // Reader view: highlight if playback did NOT originate from playlist
-                } else if (viewMode === 'search') {
-                    isActive = true; // Search view: always highlight the playing ayah
+                if (viewMode === 'playlist_view') {
+                    isActive = isPlaylistItem; // Playlist view: only highlight playlist items
+                } else {
+                    isActive = true; // Reader, search, and other views: always highlight the playing ayah
                 }
             }
             const isSelected = selectedAyahs.some(s => s.number === ayahData.number);
@@ -1838,7 +1847,7 @@ import { bigCache } from "../lib/storage.js";
                 if (!activeAyah) return;
                 
                 // Check if current playback is from a playlist
-                const isPlaylistPlayback = activePlaylist?.items?.some(item => item.number === activeAyah?.number);
+                const isPlaylistPlayback = playlistPlaybackRef.current && !!activePlaylist;
                 
                 // If playlist playback, go to playlist view; otherwise go to reader view
                 const targetViewMode = isPlaylistPlayback ? 'playlist_view' : 'reader';
