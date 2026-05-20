@@ -876,18 +876,27 @@ import { bigCache } from "../lib/storage.js";
             }, [playAyah]);
 
             const playNext = useCallback((options = {}) => {
-                const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
+                // Playlist context is determined by activePlaylist being set, NOT viewMode.
+                // This ensures playlist order is respected even when the user switches to reader view
+                // while a playlist is playing.
+                const isPlaylistMode = !!activePlaylist;
+                const list = isPlaylistMode ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
 
-                // idx === -1 means the currently playing ayah is from a different surah
-                // (user navigated away while audio was playing). 
-                // DO NOT fetchSurah - just play the next ayah without changing view.
+                // idx === -1 means the currently playing ayah is not found in the current list.
+                // For playlist mode: this should not happen normally, but guard just in case.
+                // For reader/search mode: the playing ayah is from a different surah — play
+                // the next ayah globally without changing view.
                 if (idx === -1 && activeAyah) {
-                    // Find the next ayah globally and play it
-                    const nextGlobalNumber = activeAyah.number + 1;
-                    if (nextGlobalNumber <= 6236) { // Last ayah in Quran
-                        fetchAndPlaySingleAyah(nextGlobalNumber, { automatic: options.automatic });
+                    if (!isPlaylistMode) {
+                        // Reader/search mode: play next global ayah without changing view
+                        const nextGlobalNumber = activeAyah.number + 1;
+                        if (nextGlobalNumber <= 6236) { // Last ayah in Quran
+                            fetchAndPlaySingleAyah(nextGlobalNumber, { automatic: options.automatic });
+                        }
                     }
+                    // In playlist mode with idx === -1: playlist may still be loading/hydrating;
+                    // silently do nothing to avoid breaking playback state.
                     return;
                 }
 
@@ -896,7 +905,10 @@ import { bigCache } from "../lib/storage.js";
                 } else if (idx === list.length - 1 && repeatMode === 'all') {
                     playAyahRef.current?.(list[0], { forcePlay: true, automatic: options.automatic });
                 } else if (idx === list.length - 1 && repeatMode === 'none') {
-                    if (viewMode === 'reader' && activeSurah) {
+                    if (isPlaylistMode) {
+                        // Playlist finished — show toast regardless of which view is visible
+                        showToast(`Liste bitti: ${activePlaylist?.name}`);
+                    } else if (viewMode === 'reader' && activeSurah) {
                         const currentIdx = sortedSurahs.findIndex(s => s.number === activeSurah.number);
                         const nextSurah = (currentIdx !== -1 && currentIdx < sortedSurahs.length - 1) ? sortedSurahs[currentIdx + 1] : null;
                         if (nextSurah) {
@@ -925,19 +937,23 @@ import { bigCache } from "../lib/storage.js";
                         } else {
                             showToast("Son sureye ulaşıldı.");
                         }
-                    } else if (viewMode === 'playlist_view') showToast(`Liste bitti: ${activePlaylist?.name}`);
-                    else if (viewMode === 'search') showToast("Arama sonuçları bitti.");
+                    } else if (viewMode === 'search') showToast("Arama sonuçları bitti.");
                 }
             }, [viewMode, activePlaylist, detailedResults, ayahs, activeAyah, repeatMode, activeSurah, sortedSurahs, surahs, showToast, fetchAndPlaySingleAyah]);
 
             const playPrev = useCallback(() => {
-                const list = (viewMode === 'playlist_view' && activePlaylist) ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
+                // Playlist context is determined by activePlaylist being set, NOT viewMode.
+                const isPlaylistMode = !!activePlaylist;
+                const list = isPlaylistMode ? activePlaylist.items : (viewMode === 'search' ? detailedResults : ayahs);
                 const idx = list.findIndex(a => a.number === activeAyah?.number);
-                // User navigated away — play previous ayah without changing view
+                // User navigated away from reader/search — play previous ayah without changing view.
+                // In playlist mode, guard against hydration edge cases but don't jump globally.
                 if (idx === -1 && activeAyah) {
-                    const prevGlobalNumber = activeAyah.number - 1;
-                    if (prevGlobalNumber >= 1) { // First ayah in Quran
-                        fetchAndPlaySingleAyah(prevGlobalNumber, { onlyAudio: false });
+                    if (!isPlaylistMode) {
+                        const prevGlobalNumber = activeAyah.number - 1;
+                        if (prevGlobalNumber >= 1) { // First ayah in Quran
+                            fetchAndPlaySingleAyah(prevGlobalNumber, { onlyAudio: false });
+                        }
                     }
                     return;
                 }
