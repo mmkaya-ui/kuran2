@@ -1,6 +1,6 @@
-const CACHE_NAME = 'quran-v27';
-const DYNAMIC_CACHE_NAME = 'quran-app-dynamic-v27';
-const AUDIO_CACHE_NAME = 'quran-audio-v27';
+const CACHE_NAME = 'quran-v28';
+const DYNAMIC_CACHE_NAME = 'quran-app-dynamic-v28';
+const AUDIO_CACHE_NAME = 'quran-audio-v28';
 
 const MAX_AUDIO_ENTRIES = 500;   // ~40MB limit for audio files
 const MAX_API_ENTRIES   = 100;   // API responses limit
@@ -29,18 +29,14 @@ async function handleRangeRequest(request, cacheName) {
         
         // If not in cache, fetch the FULL resource from network first to cache it safely as a 200 response
         if (!cachedResponse) {
-            const cleanRequest = new Request(request.url, {
-                method: 'GET',
-                headers: new Headers(request.headers)
-            });
-            cleanRequest.headers.delete('range');
-            
+            // Use a URL-only key (no Range header) so subsequent cache.match calls always hit
+            const cleanRequest = new Request(request.url, { method: 'GET' });
             const networkResponse = await fetch(cleanRequest);
             if (networkResponse.status === 200) {
-                await cache.put(request, networkResponse.clone());
+                await cache.put(cleanRequest, networkResponse.clone());
                 trimCache(cacheName, MAX_AUDIO_ENTRIES);
             }
-            cachedResponse = await cache.match(request);
+            cachedResponse = await cache.match(cleanRequest);
         }
 
         if (!cachedResponse) {
