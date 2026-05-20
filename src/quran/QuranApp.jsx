@@ -927,26 +927,8 @@ import { bigCache } from "../lib/storage.js";
                 }
 
                 if (idx !== -1 && idx < list.length - 1) {
-                    const nextAyah = list[idx + 1];
-                    if (isPlaylistMode && viewMode === 'reader' && activeSurah && nextAyah.surahNumber !== activeSurah.number) {
-                        const s = surahs.find(x => x.number === nextAyah.surahNumber);
-                        if (s) {
-                            jumpTargetRef.current = { ayahNumber: nextAyah.numberInSurah, shouldPlay: true };
-                            fetchSurah(s);
-                            return;
-                        }
-                    }
                     playAyahRef.current?.(list[idx + 1], { automatic: isAutomatic, isAdvance: true });
                 } else if (idx === list.length - 1 && repeatMode === 'all') {
-                    const firstAyah = list[0];
-                    if (isPlaylistMode && viewMode === 'reader' && activeSurah && firstAyah.surahNumber !== activeSurah.number) {
-                        const s = surahs.find(x => x.number === firstAyah.surahNumber);
-                        if (s) {
-                            jumpTargetRef.current = { ayahNumber: firstAyah.numberInSurah, shouldPlay: true };
-                            fetchSurah(s);
-                            return;
-                        }
-                    }
                     playAyahRef.current?.(list[0], { forcePlay: true, automatic: isAutomatic, isAdvance: true });
                 } else if (idx === list.length - 1 && repeatMode === 'none') {
                     if (isPlaylistMode) {
@@ -1004,15 +986,6 @@ import { bigCache } from "../lib/storage.js";
                     return;
                 }
                 if (idx > 0) {
-                    const prevAyah = list[idx - 1];
-                    if (isPlaylistMode && viewMode === 'reader' && activeSurah && prevAyah.surahNumber !== activeSurah.number) {
-                        const s = surahs.find(x => x.number === prevAyah.surahNumber);
-                        if (s) {
-                            jumpTargetRef.current = { ayahNumber: prevAyah.numberInSurah, shouldPlay: true };
-                            fetchSurah(s);
-                            return;
-                        }
-                    }
                     playAyahRef.current?.(list[idx - 1], { automatic: actualOptions.automatic || false, isAdvance: true });
                 }
             }, [viewMode, activePlaylist, detailedResults, ayahs, activeAyah, activeSurah, surahs, fetchAndPlaySingleAyah]);
@@ -1039,7 +1012,7 @@ import { bigCache } from "../lib/storage.js";
                         setDisplayLimit(Math.max(idx + 10, 10));
                         setTimeout(() => {
                             setActiveAyah(target);
-                            if (shouldPlay) playAyahRef.current?.(target, { forcePlay: true });
+                            if (shouldPlay) playAyahRef.current?.(target, { forcePlay: true, automatic: true, isAdvance: true });
                             // lastScrolledAyah in MainContent may still hold this ayah's number
                             // so the auto-scroll useEffect won't fire — scroll manually
                             const el = document.getElementById(`ayah-${target.number}`);
@@ -1606,8 +1579,10 @@ import { bigCache } from "../lib/storage.js";
             if (activeAyah?.number === ayahData.number) {
                 if (viewMode === 'playlist_view') {
                     isActive = isPlaylistItem; // Playlist view: only highlight playlist items
-                } else {
-                    isActive = true; // Reader, search, and other views: always highlight the playing ayah
+                } else if (viewMode === 'reader') {
+                    isActive = !playlistPlaybackRef.current; // Reader view: only highlight if NOT playlist playback
+                } else if (viewMode === 'search') {
+                    isActive = true; // Search view: always highlight the playing ayah
                 }
             }
             const isSelected = selectedAyahs.some(s => s.number === ayahData.number);
