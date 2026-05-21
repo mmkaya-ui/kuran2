@@ -5,7 +5,6 @@
  */
 import './styles.css';
 import { migrateFromLocalStorage } from './lib/storage.js';
-import './schedule/index.js';
 import './quran/QuranApp.jsx';
 import { registerServiceWorker } from './sw-register.js';
 

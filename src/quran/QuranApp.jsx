@@ -3115,8 +3115,10 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                     setDetailedResults([]);
                     return;
                 }
-                // If in reader or any other mode, go to main page
-                window.toggleQuranView(false);
+                // If in reader or any other mode, stay in reader (Kuran ana sayfası)
+                if (viewMode !== 'reader') {
+                    setViewMode('reader');
+                }
             };
 
             const [playlistModal, setPlaylistModal] = useState(false);
@@ -3218,7 +3220,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                 <div className="min-w-0">
                                     <h1 className="text-lg font-bold mb-0.5 flex items-center leading-none truncate">
                                         <i className="fa-solid fa-book-open mr-2 text-sm"></i> 
-                                        Kuran Rehberi
+                                        Kuran Talebesi
                                         <button 
                                             onClick={() => setShowHelp(true)} 
                                             aria-label="Kullanım rehberi" 
@@ -3228,7 +3230,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                                             <i className="fa-solid fa-circle-question text-xs"></i>
                                         </button>
                                     </h1>
-                                    <p className="text-emerald-100 text-[11px] opacity-90 leading-none">Oku, Dinle, Araştır</p>
+                                    <p className="text-emerald-100 text-[11px] opacity-90 leading-none">Oku, Dinle, Tefekkür et</p>
                                 </div>
                             </div>
                             <div className="flex gap-2 items-center mb-2">
