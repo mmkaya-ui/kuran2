@@ -164,7 +164,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             const lastTransitionTimeRef = useRef(0);
             const playAyahRef = useRef(null);
             const nextSurahCacheRef = useRef(null);
-            const scrollPositionRef = useRef(0); // Store scroll position when switching views
+            const scrollPositionsRef = useRef({}); // Store scroll positions for each viewMode
             // Tracks whether the current playback chain was started from playlist_view.
             // Set to true only when the user taps play inside playlist_view;
             // cleared when the user manually taps play in reader/search view.
@@ -174,7 +174,11 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
 
             // Reset scroll memory when surah changes
             useEffect(() => {
-                scrollPositionRef.current = 0;
+                if (scrollPositionsRef.current) scrollPositionsRef.current['reader'] = 0;
+                if (viewMode === 'reader') {
+                    const mainScroll = document.getElementById('main-scroll');
+                    if (mainScroll) mainScroll.scrollTo({ top: 0, behavior: 'auto' });
+                }
             }, [activeSurah]);
 
             // ═══════════════════════════════════════════════════
@@ -265,38 +269,22 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
             }, []);
 
 
-            // Scroll pozisyonunu kaydet — sadece reader <-> search arasi geciste restore et.
-            // playlist_view veya my_notes'tan donunce reader'i en basa al (farkli icerik).
-            // Initial value mirrors the actual initial viewMode state so first transition is correct.
-            const prevViewModeRef = useRef(null);
+            // Scroll pozisyonunu her görünüm (viewMode) için ayrı ayrı kaydet ve geri yükle
             useEffect(() => {
                 const mainScroll = document.getElementById('main-scroll');
                 if (!mainScroll) return;
 
-                if (viewMode === 'reader') {
-                    const prev = prevViewModeRef.current;
-                    // Sadece search <-> reader arasindan geliyorsak restore et.
-                    // null means initial mount — treat same as non-search (no restore).
-                    const shouldRestore = prev === 'search' && scrollPositionRef.current > 0;
-                    if (shouldRestore) {
-                        setTimeout(() => {
-                            mainScroll.scrollTo({ top: scrollPositionRef.current, behavior: 'auto' });
-                        }, 50);
-                    } else {
-                        // playlist/notes'tan geliyorsak veya ilk yuklemede basa don
-                        mainScroll.scrollTo({ top: 0, behavior: 'auto' });
-                        scrollPositionRef.current = 0;
-                    }
+                const savedPos = scrollPositionsRef.current[viewMode] || 0;
+                setTimeout(() => {
+                    mainScroll.scrollTo({ top: savedPos, behavior: 'auto' });
+                }, 50);
 
-                    const handleScroll = () => {
-                        scrollPositionRef.current = mainScroll.scrollTop;
-                    };
-                    mainScroll.addEventListener('scroll', handleScroll, { passive: true });
-                    prevViewModeRef.current = 'reader';
-                    return () => mainScroll.removeEventListener('scroll', handleScroll);
-                } else {
-                    prevViewModeRef.current = viewMode;
-                }
+                const handleScroll = () => {
+                    scrollPositionsRef.current[viewMode] = mainScroll.scrollTop;
+                };
+
+                mainScroll.addEventListener('scroll', handleScroll, { passive: true });
+                return () => mainScroll.removeEventListener('scroll', handleScroll);
             }, [viewMode]);
 
             useEffect(() => {
@@ -1483,7 +1471,7 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 bookmark, setBookmark, fetchDetailsForMatches, loading, loadingText, fetchError, setFetchError, searching,
                 displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, navigate,
                 playbackRate, setPlaybackRate, repeatMode, setRepeatMode,
-                toastMessage, showToast, scrollPositionRef, playlistPlaybackRef, playbackPlaylistRef
+                toastMessage, showToast, scrollPositionsRef, playlistPlaybackRef, playbackPlaylistRef
             };
 
             return <QuranContext.Provider value={value}>{children}</QuranContext.Provider>;
@@ -2598,13 +2586,13 @@ import { bigCache, playlists as dbPlaylists, notes as dbNotes, migrateFromLocalS
                 searching, searchQuery, handleSearch, currentSearchTerm, rawMatches, setRawMatches, detailedResults, setDetailedResults, fetchDetailsForMatches,
                 loading, loadingText, fetchError, playlists, activePlaylist, setActivePlaylist, setPlaylists,
                 selectedAyahs, setSelectedAyahs, bookmark, fetchSurah, surahs, sortType, setSortType, sortedSurahs,
-                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionRef,
+                activeAyah, isPlaying, displayLimit, setDisplayLimit, jumpTargetRef, skipDisplayResetRef, closePlayer, showToast, scrollPositionsRef,
                 playlistPlaybackRef, playbackPlaylistRef
             } = useQuran();
 
             // Initialize lastScrolledAyah to activeAyah.number if returning to a saved scroll position,
             // to bypass the initial smooth auto-scroll and jump instantly.
-            const lastScrolledAyah = useRef(scrollPositionRef.current > 0 ? activeAyah?.number : null);
+            const lastScrolledAyah = useRef(scrollPositionsRef.current['reader'] > 0 ? activeAyah?.number : null);
 
             // Smart Scroll Detection - Hide/Show Mobile Surah Select on scroll
             const [showMobileSelect, setShowMobileSelect] = useState(true);
